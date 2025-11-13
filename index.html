@@ -12,11 +12,38 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-card: #ffffff;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --accent: #667eea;
+            --accent-alt: #f093fb;
+            --border: #e5e7eb;
+            --shadow: rgba(0,0,0,0.1);
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body.dark-mode {
+            --bg-primary: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            --bg-card: #1e293b;
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --accent: #818cf8;
+            --accent-alt: #c084fc;
+            --border: #334155;
+            --shadow: rgba(0,0,0,0.3);
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #333;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             line-height: 1.6;
+            transition: all 0.3s ease;
+            min-height: 100vh;
         }
 
         .container {
@@ -25,21 +52,220 @@
             padding: 20px;
         }
 
+        /* Top Toolbar */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--bg-card);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px var(--shadow);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid var(--border);
+            border-radius: 25px;
+            font-size: 1em;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .toolbar-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .icon-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .icon-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+
+        .icon-btn.secondary {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+
         header {
             text-align: center;
-            padding: 60px 20px;
-            color: white;
+            padding: 60px 20px 40px;
+            color: var(--text-primary);
         }
 
         h1 {
             font-size: 3.5em;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px var(--shadow);
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-alt) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .tagline {
             font-size: 1.3em;
             opacity: 0.95;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Timer Section */
+        .timer-section {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px var(--shadow);
+            text-align: center;
+        }
+
+        .timer-display {
+            font-size: 4em;
+            font-weight: bold;
+            color: var(--accent);
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 2px 4px var(--shadow);
+        }
+
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .timer-btn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            min-width: 120px;
+        }
+
+        .timer-btn.start {
+            background: var(--success);
+            color: white;
+        }
+
+        .timer-btn.stop {
+            background: var(--danger);
+            color: white;
+        }
+
+        .timer-btn.reset {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+
+        .timer-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+
+        .timer-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-alt) 100%);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        /* Scramble Section */
+        .scramble-section {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px var(--shadow);
+        }
+
+        .scramble-display {
+            background: #1e293b;
+            color: #10b981;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.3em;
+            margin: 20px 0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .scramble-display {
+            background: #0f172a;
+        }
+
+        .scramble-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
         }
 
         .nav-tabs {
@@ -51,34 +277,36 @@
         }
 
         .tab-btn {
-            background: white;
-            border: none;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
             padding: 15px 30px;
             border-radius: 50px;
             cursor: pointer;
             font-size: 1em;
             font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px var(--shadow);
+            color: var(--text-primary);
         }
 
         .tab-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 6px 12px var(--shadow);
         }
 
         .tab-btn.active {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-alt) 100%);
             color: white;
+            border-color: transparent;
         }
 
         .content-section {
             display: none;
-            background: white;
+            background: var(--bg-card);
             border-radius: 20px;
             padding: 40px;
             margin: 20px 0;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px var(--shadow);
             animation: fadeIn 0.5s ease;
         }
 
@@ -98,26 +326,26 @@
         }
 
         h2 {
-            color: #667eea;
+            color: var(--accent);
             font-size: 2.5em;
             margin-bottom: 20px;
-            border-bottom: 3px solid #f093fb;
+            border-bottom: 3px solid var(--accent-alt);
             padding-bottom: 10px;
         }
 
         h3 {
-            color: #764ba2;
+            color: var(--accent-alt);
             font-size: 1.8em;
             margin-top: 30px;
             margin-bottom: 15px;
         }
 
         .cube-notation {
-            background: linear-gradient(135deg, #f093fb15 0%, #f5576c15 100%);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(240, 147, 251, 0.1) 100%);
             padding: 20px;
             border-radius: 10px;
             margin: 20px 0;
-            border-left: 5px solid #f5576c;
+            border-left: 5px solid var(--accent-alt);
         }
 
         .notation-grid {
@@ -128,26 +356,33 @@
         }
 
         .notation-item {
-            background: white;
+            background: var(--bg-card);
             padding: 15px;
             border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px var(--shadow);
             text-align: center;
+            border: 2px solid var(--border);
+            transition: transform 0.3s ease;
+        }
+
+        .notation-item:hover {
+            transform: translateY(-5px);
         }
 
         .notation-item strong {
-            color: #667eea;
+            color: var(--accent);
             font-size: 1.3em;
             display: block;
             margin-bottom: 5px;
         }
 
         .method-card {
-            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
             padding: 25px;
             border-radius: 15px;
             margin: 20px 0;
             transition: transform 0.3s ease;
+            border: 2px solid var(--border);
         }
 
         .method-card:hover {
@@ -164,17 +399,17 @@
         }
 
         .difficulty.beginner {
-            background: #4ade80;
+            background: var(--success);
             color: white;
         }
 
         .difficulty.intermediate {
-            background: #fbbf24;
+            background: var(--warning);
             color: white;
         }
 
         .difficulty.advanced {
-            background: #f87171;
+            background: var(--danger);
             color: white;
         }
 
@@ -188,10 +423,15 @@
             counter-increment: step-counter;
             padding: 15px;
             margin: 15px 0;
-            background: #f8f9fa;
+            background: var(--border);
             border-radius: 10px;
             position: relative;
             padding-left: 60px;
+            transition: all 0.3s ease;
+        }
+
+        .step-list li:hover {
+            background: rgba(102, 126, 234, 0.1);
         }
 
         .step-list li::before {
@@ -199,7 +439,7 @@
             position: absolute;
             left: 15px;
             top: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-alt) 100%);
             color: white;
             width: 35px;
             height: 35px;
@@ -208,6 +448,20 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
+        }
+
+        .step-list li.completed {
+            opacity: 0.7;
+            text-decoration: line-through;
+        }
+
+        .step-list li input[type="checkbox"] {
+            position: absolute;
+            right: 15px;
+            top: 20px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
         }
 
         .algorithm {
@@ -219,6 +473,27 @@
             font-size: 1.1em;
             margin: 10px 0;
             overflow-x: auto;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .algorithm:hover {
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .algorithm::after {
+            content: "📋 Click to copy";
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+
+        body.dark-mode .algorithm {
+            background: #0f172a;
         }
 
         .tip-box {
@@ -227,19 +502,30 @@
             padding: 20px;
             margin: 20px 0;
             border-radius: 8px;
+            color: #78350f;
+            position: relative;
+            padding-left: 60px;
         }
 
         .tip-box::before {
-            content: "💡 Tip: ";
-            font-weight: bold;
-            color: #d97706;
+            content: "💡";
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            font-size: 1.5em;
+        }
+
+        body.dark-mode .tip-box {
+            background: #422006;
+            color: #fef3c7;
         }
 
         footer {
             text-align: center;
             padding: 40px 20px;
-            color: white;
+            color: var(--text-secondary);
             margin-top: 40px;
+            border-top: 1px solid var(--border);
         }
 
         .progress-indicator {
@@ -247,13 +533,17 @@
             justify-content: space-between;
             margin: 30px 0;
             padding: 20px;
-            background: #f8f9fa;
+            background: var(--border);
             border-radius: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .progress-step {
             text-align: center;
             flex: 1;
+            min-width: 80px;
+            transition: all 0.3s ease;
         }
 
         .progress-circle {
@@ -267,15 +557,62 @@
             justify-content: center;
             font-weight: bold;
             color: #666;
+            transition: all 0.3s ease;
         }
 
         .progress-step.complete .progress-circle {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-alt) 100%);
             color: white;
+            transform: scale(1.1);
+        }
+
+        .progress-step.complete {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .copy-feedback {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px var(--shadow);
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .copy-feedback.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        @media print {
+            .toolbar, .timer-section, .scramble-section, .nav-tabs, footer {
+                display: none !important;
+            }
+            
+            .content-section {
+                display: block !important;
+                page-break-inside: avoid;
+            }
+            
+            body {
+                background: white !important;
+                color: black !important;
+            }
         }
 
         @media (max-width: 768px) {
             h1 {
+                font-size: 2.5em;
+            }
+            
+            h2 {
                 font-size: 2em;
             }
             
@@ -286,15 +623,107 @@
             .notation-grid {
                 grid-template-columns: 1fr;
             }
+
+            .timer-display {
+                font-size: 2.5em;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                max-width: 100%;
+            }
+
+            .timer-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .timer-btn {
+                width: 100%;
+                max-width: 200px;
+            }
+
+            .nav-tabs {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                text-align: center;
+            }
+        }
+
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Search tutorials, algorithms..." onkeyup="searchContent()">
+            </div>
+            <div class="toolbar-buttons">
+                <button class="icon-btn" onclick="toggleDarkMode()">
+                    <span id="darkModeIcon">🌙</span> <span id="darkModeText">Dark Mode</span>
+                </button>
+                <button class="icon-btn secondary" onclick="window.print()">
+                    🖨️ Print
+                </button>
+                <button class="icon-btn secondary" onclick="resetProgress()">
+                    🔄 Reset Progress
+                </button>
+            </div>
+        </div>
+
         <header>
             <h1>🎲 Rubik's Cube Mastery</h1>
-            <p class="tagline">Your complete guide from beginner to speedcuber</p>
+            <p class="tagline">Your complete guide from beginner to speedcuber - master the cube with step-by-step tutorials and practice tools</p>
         </header>
+
+        <!-- Timer Section -->
+        <div class="timer-section">
+            <h2 style="border: none; margin-bottom: 10px;">⏱️ Speedcube Timer</h2>
+            <div class="timer-display" id="timerDisplay">00:00.000</div>
+            <div class="timer-controls">
+                <button class="timer-btn start" onclick="startTimer()">▶️ Start</button>
+                <button class="timer-btn stop" onclick="stopTimer()">⏸️ Stop</button>
+                <button class="timer-btn reset" onclick="resetTimer()">🔄 Reset</button>
+            </div>
+            <div class="timer-stats">
+                <div class="stat-card">
+                    <div class="stat-label">Current</div>
+                    <div class="stat-value" id="currentTime">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Best Time</div>
+                    <div class="stat-value" id="bestTime">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg of 5</div>
+                    <div class="stat-value" id="avg5">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Solves</div>
+                    <div class="stat-value" id="totalSolves">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scramble Section -->
+        <div class="scramble-section">
+            <h2 style="border: none; margin-bottom: 10px;">🎲 Scramble Generator</h2>
+            <div class="scramble-display" id="scrambleDisplay">Click "New Scramble" to generate</div>
+            <div class="scramble-controls">
+                <button class="icon-btn" onclick="generateScramble()">🔀 New Scramble</button>
+                <button class="icon-btn secondary" onclick="copyScramble()">📋 Copy</button>
+            </div>
+        </div>
 
         <div class="nav-tabs">
             <button class="tab-btn active" onclick="showTab('basics')">Basics</button>
@@ -434,27 +863,27 @@
             <p>This is the easiest method to learn. Average solve time: 1-2 minutes with practice.</p>
 
             <div class="progress-indicator">
-                <div class="progress-step complete">
+                <div class="progress-step" data-step="1">
                     <div class="progress-circle">1</div>
                     <p>White Cross</p>
                 </div>
-                <div class="progress-step complete">
+                <div class="progress-step" data-step="2">
                     <div class="progress-circle">2</div>
                     <p>First Layer</p>
                 </div>
-                <div class="progress-step complete">
+                <div class="progress-step" data-step="3">
                     <div class="progress-circle">3</div>
                     <p>Second Layer</p>
                 </div>
-                <div class="progress-step complete">
+                <div class="progress-step" data-step="4">
                     <div class="progress-circle">4</div>
                     <p>Yellow Cross</p>
                 </div>
-                <div class="progress-step complete">
+                <div class="progress-step" data-step="5">
                     <div class="progress-circle">5</div>
                     <p>Top Layer</p>
                 </div>
-                <div class="progress-step complete">
+                <div class="progress-step" data-step="6">
                     <div class="progress-circle">6</div>
                     <p>Final Layer</p>
                 </div>
@@ -462,17 +891,17 @@
 
             <h3>Step 1: White Cross</h3>
             <ul class="step-list">
-                <li>Hold the cube with white center on top</li>
-                <li>Find the four white edge pieces</li>
-                <li>Position each white edge on top, matching the side colors with the center pieces</li>
-                <li>You should have a white plus sign (+) on top</li>
+                <li><input type="checkbox" onchange="saveProgress()">Hold the cube with white center on top</li>
+                <li><input type="checkbox" onchange="saveProgress()">Find the four white edge pieces</li>
+                <li><input type="checkbox" onchange="saveProgress()">Position each white edge on top, matching the side colors with the center pieces</li>
+                <li><input type="checkbox" onchange="saveProgress()">You should have a white plus sign (+) on top</li>
             </ul>
 
             <h3>Step 2: White Corners (First Layer)</h3>
             <ul class="step-list">
-                <li>Find a white corner piece in the bottom layer</li>
-                <li>Position it below its target location</li>
-                <li>Use the algorithm repeatedly until the corner is solved:</li>
+                <li><input type="checkbox" onchange="saveProgress()">Find a white corner piece in the bottom layer</li>
+                <li><input type="checkbox" onchange="saveProgress()">Position it below its target location</li>
+                <li><input type="checkbox" onchange="saveProgress()">Use the algorithm repeatedly until the corner is solved:</li>
             </ul>
             <div class="algorithm">R U R' U'</div>
             <p>Repeat 2-4 times for each corner.</p>
@@ -480,9 +909,9 @@
             <h3>Step 3: Second Layer Edges</h3>
             <p>Flip the cube so white is on bottom. Now we'll solve the middle layer.</p>
             <ul class="step-list">
-                <li>Find an edge piece in the top layer without yellow</li>
-                <li>Rotate top until the edge's top color matches a center</li>
-                <li>Determine if it goes left or right</li>
+                <li><input type="checkbox" onchange="saveProgress()">Find an edge piece in the top layer without yellow</li>
+                <li><input type="checkbox" onchange="saveProgress()">Rotate top until the edge's top color matches a center</li>
+                <li><input type="checkbox" onchange="saveProgress()">Determine if it goes left or right</li>
             </ul>
             <p><strong>To move edge to the right:</strong></p>
             <div class="algorithm">U R U' R' U' F' U F</div>
@@ -501,9 +930,9 @@
 
             <h3>Step 6: Position Yellow Corners</h3>
             <ul class="step-list">
-                <li>Find a corner that's already in the right position (colors match even if orientation is wrong)</li>
-                <li>Hold that corner in the front-right position</li>
-                <li>Use this algorithm:</li>
+                <li><input type="checkbox" onchange="saveProgress()">Find a corner that's already in the right position (colors match even if orientation is wrong)</li>
+                <li><input type="checkbox" onchange="saveProgress()">Hold that corner in the front-right position</li>
+                <li><input type="checkbox" onchange="saveProgress()">Use this algorithm:</li>
             </ul>
             <div class="algorithm">U R U' L' U R' U' L</div>
 
@@ -544,19 +973,19 @@
 
             <h3>Cross Tips</h3>
             <ul class="step-list">
-                <li>Plan the entire cross during the 15-second inspection</li>
-                <li>Aim for 8 moves or less</li>
-                <li>Practice "color neutrality" - being able to start with any color cross</li>
-                <li>Look ahead to F2L pairs during cross execution</li>
+                <li><input type="checkbox" onchange="saveProgress()">Plan the entire cross during the 15-second inspection</li>
+                <li><input type="checkbox" onchange="saveProgress()">Aim for 8 moves or less</li>
+                <li><input type="checkbox" onchange="saveProgress()">Practice "color neutrality" - being able to start with any color cross</li>
+                <li><input type="checkbox" onchange="saveProgress()">Look ahead to F2L pairs during cross execution</li>
             </ul>
 
             <h3>F2L Fundamentals</h3>
             <p>F2L pairs a corner with its corresponding edge. Key concepts:</p>
             <ul class="step-list">
-                <li>Find corner and edge pieces that belong together</li>
-                <li>Pair them in the top layer</li>
-                <li>Insert the pair into the correct slot</li>
-                <li>41 different cases, but intuition is key</li>
+                <li><input type="checkbox" onchange="saveProgress()">Find corner and edge pieces that belong together</li>
+                <li><input type="checkbox" onchange="saveProgress()">Pair them in the top layer</li>
+                <li><input type="checkbox" onchange="saveProgress()">Insert the pair into the correct slot</li>
+                <li><input type="checkbox" onchange="saveProgress()">41 different cases, but intuition is key</li>
             </ul>
 
             <p><strong>Basic F2L Case Example:</strong></p>
@@ -632,18 +1061,6 @@
                     <li>Last layer (OLL + PLL)</li>
                 </ul>
                 <p><strong>Advantages:</strong> Intuitive, few algorithms, good for beginners transitioning to advanced methods</p>
-            </div>
-
-            <div class="method-card">
-                <h3>CFCE (Advanced CFOP)</h3>
-                <span class="difficulty advanced">Advanced</span>
-                <p>CFOP with advanced techniques:</p>
-                <ul>
-                    <li><strong>X-Cross:</strong> Solve cross + 1 F2L pair during inspection</li>
-                    <li><strong>ZBLL:</strong> 493 algorithms to solve last layer in one look</li>
-                    <li><strong>VLS:</strong> Last pair + OLL skip</li>
-                    <li><strong>COLL:</strong> Orient and permute corners simultaneously</li>
-                </ul>
             </div>
 
             <h3>One-Handed Solving (OH)</h3>
@@ -734,20 +1151,6 @@
                 <li>Getting stuck in one method without exploring others</li>
             </ul>
 
-            <h3>Mental Game</h3>
-            <div class="tip-box">
-                Speedcubing is as much mental as physical. Stay calm during solves, don't get discouraged by bad times, and celebrate small improvements. Consistency beats occasional fast times!
-            </div>
-
-            <h3>Recommended Resources</h3>
-            <ul class="step-list">
-                <li><strong>CubeSkills:</strong> Comprehensive tutorials by top cubers</li>
-                <li><strong>SpeedCubeDB:</strong> Algorithm database</li>
-                <li><strong>csTimer:</strong> Best online timer with stats</li>
-                <li><strong>J Perm YouTube:</strong> Excellent tutorials</li>
-                <li><strong>Reddit r/Cubers:</strong> Active community</li>
-            </ul>
-
             <h3>Progression Timeline</h3>
             <div class="method-card">
                 <ul>
@@ -767,47 +1170,269 @@
         </footer>
     </div>
 
+    <div class="copy-feedback" id="copyFeedback">Copied to clipboard!</div>
+
     <script>
+        // Timer Variables
+        let timerInterval = null;
+        let startTime = 0;
+        let elapsedTime = 0;
+        let times = JSON.parse(localStorage.getItem('cubeTimes')) || [];
+
+        // Dark Mode
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.getElementById('darkModeIcon');
+            const text = document.getElementById('darkModeText');
+            if (document.body.classList.contains('dark-mode')) {
+                icon.textContent = '☀️';
+                text.textContent = 'Light Mode';
+            } else {
+                icon.textContent = '🌙';
+                text.textContent = 'Dark Mode';
+            }
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+
+        // Load dark mode preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('darkModeIcon').textContent = '☀️';
+            document.getElementById('darkModeText').textContent = 'Light Mode';
+        }
+
+        // Timer Functions
+        function startTimer() {
+            if (timerInterval) return;
+            startTime = Date.now() - elapsedTime;
+            timerInterval = setInterval(updateTimer, 10);
+        }
+
+        function stopTimer() {
+            if (!timerInterval) return;
+            clearInterval(timerInterval);
+            timerInterval = null;
+            
+            // Save time
+            const time = elapsedTime / 1000;
+            times.push(time);
+            localStorage.setItem('cubeTimes', JSON.stringify(times));
+            updateStats();
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            elapsedTime = 0;
+            document.getElementById('timerDisplay').textContent = '00:00.000';
+        }
+
+        function updateTimer() {
+            elapsedTime = Date.now() - startTime;
+            const minutes = Math.floor(elapsedTime / 60000);
+            const seconds = Math.floor((elapsedTime % 60000) / 1000);
+            const ms = Math.floor(elapsedTime % 1000);
+            
+            document.getElementById('timerDisplay').textContent = 
+                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+        }
+
+        function updateStats() {
+            // Filter out any invalid times and convert to numbers
+            times = times.filter(t => !isNaN(t) && t > 0).map(t => Number(t));
+            
+            const current = times.length > 0 ? times[times.length - 1].toFixed(2) : '--';
+            const best = times.length > 0 ? Math.min(...times).toFixed(2) : '--';
+            const avg5 = times.length >= 5 ? 
+                (times.slice(-5).reduce((a, b) => a + b, 0) / 5).toFixed(2) : '--';
+            
+            document.getElementById('currentTime').textContent = current;
+            document.getElementById('bestTime').textContent = best;
+            document.getElementById('avg5').textContent = avg5;
+            document.getElementById('totalSolves').textContent = times.length;
+            
+            // Save cleaned times back to localStorage
+            localStorage.setItem('cubeTimes', JSON.stringify(times));
+        }
+
+        // Scramble Generator
+        const moves = ['R', 'R\'', 'R2', 'L', 'L\'', 'L2', 'U', 'U\'', 'U2', 'D', 'D\'', 'D2', 'F', 'F\'', 'F2', 'B', 'B\'', 'B2'];
+        
+        function generateScramble() {
+            let scramble = [];
+            let lastMove = '';
+            
+            for (let i = 0; i < 20; i++) {
+                let move;
+                do {
+                    move = moves[Math.floor(Math.random() * moves.length)];
+                } while (move[0] === lastMove);
+                
+                scramble.push(move);
+                lastMove = move[0];
+            }
+            
+            document.getElementById('scrambleDisplay').textContent = scramble.join(' ');
+        }
+
+        function copyScramble() {
+            const text = document.getElementById('scrambleDisplay').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showCopyFeedback();
+            });
+        }
+
+        // Tab Navigation
         function showTab(tabName) {
-            // Hide all content sections
             const sections = document.querySelectorAll('.content-section');
-            sections.forEach(section => {
-                section.classList.remove('active');
-            });
-
-            // Remove active class from all buttons
+            sections.forEach(section => section.classList.remove('active'));
+            
             const buttons = document.querySelectorAll('.tab-btn');
-            buttons.forEach(button => {
-                button.classList.remove('active');
-            });
-
-            // Show selected section
+            buttons.forEach(button => button.classList.remove('active'));
+            
             document.getElementById(tabName).classList.add('active');
-
-            // Add active class to clicked button
             event.target.classList.add('active');
-
-            // Smooth scroll to top of content
+            
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Add some interactivity for algorithm boxes
+        // Search Functionality
+        function searchContent() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const sections = document.querySelectorAll('.content-section');
+            
+            if (query === '') {
+                sections.forEach(s => s.classList.remove('hidden'));
+                return;
+            }
+            
+            sections.forEach(section => {
+                const text = section.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    section.classList.remove('hidden');
+                    section.classList.add('active');
+                } else {
+                    section.classList.add('hidden');
+                    section.classList.remove('active');
+                }
+            });
+        }
+
+        // Progress Tracking
+        function saveProgress() {
+            const checkboxes = document.querySelectorAll('.step-list input[type="checkbox"]');
+            const progress = [];
+            
+            checkboxes.forEach((cb, index) => {
+                progress.push(cb.checked);
+                if (cb.checked) {
+                    cb.parentElement.classList.add('completed');
+                } else {
+                    cb.parentElement.classList.remove('completed');
+                }
+            });
+            
+            localStorage.setItem('cubeProgress', JSON.stringify(progress));
+            updateProgressIndicator();
+        }
+
+        function loadProgress() {
+            const progress = JSON.parse(localStorage.getItem('cubeProgress')) || [];
+            const checkboxes = document.querySelectorAll('.step-list input[type="checkbox"]');
+            
+            checkboxes.forEach((cb, index) => {
+                if (progress[index]) {
+                    cb.checked = true;
+                    cb.parentElement.classList.add('completed');
+                }
+            });
+            
+            updateProgressIndicator();
+        }
+
+        function updateProgressIndicator() {
+            const checkboxes = document.querySelectorAll('#beginner .step-list input[type="checkbox"]');
+            const steps = document.querySelectorAll('.progress-step');
+            const totalPerStep = Math.ceil(checkboxes.length / 6);
+            
+            let completedCount = 0;
+            checkboxes.forEach(cb => {
+                if (cb.checked) completedCount++;
+            });
+            
+            const stepsCompleted = Math.floor(completedCount / totalPerStep);
+            steps.forEach((step, index) => {
+                if (index < stepsCompleted) {
+                    step.classList.add('complete');
+                } else {
+                    step.classList.remove('complete');
+                }
+            });
+        }
+
+        function resetProgress() {
+            if (confirm('Reset all progress and timer stats? This cannot be undone.')) {
+                localStorage.removeItem('cubeProgress');
+                localStorage.removeItem('cubeTimes');
+                times = [];
+                
+                const checkboxes = document.querySelectorAll('.step-list input[type="checkbox"]');
+                checkboxes.forEach(cb => {
+                    cb.checked = false;
+                    cb.parentElement.classList.remove('completed');
+                });
+                
+                updateStats();
+                updateProgressIndicator();
+                alert('Progress reset!');
+            }
+        }
+
+        // Copy Feedback
+        function showCopyFeedback() {
+            const feedback = document.getElementById('copyFeedback');
+            feedback.classList.add('show');
+            setTimeout(() => {
+                feedback.classList.remove('show');
+            }, 2000);
+        }
+
+        // Algorithm Click to Copy
         document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            updateStats();
+            
             const algorithms = document.querySelectorAll('.algorithm');
             algorithms.forEach(alg => {
-                alg.style.cursor = 'pointer';
-                alg.title = 'Click to copy';
                 alg.addEventListener('click', function() {
                     const text = this.textContent;
                     navigator.clipboard.writeText(text).then(() => {
-                        const original = this.style.background;
-                        this.style.background = '#10b981';
-                        setTimeout(() => {
-                            this.style.background = original;
-                        }, 300);
+                        showCopyFeedback();
                     });
                 });
             });
+            
+            // Generate initial scramble
+            generateScramble();
+        });
+
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Spacebar for timer
+            if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT') {
+                e.preventDefault();
+                if (timerInterval) {
+                    stopTimer();
+                } else {
+                    startTimer();
+                }
+            }
+            
+            // Ctrl+G for new scramble
+            if (e.ctrlKey && e.key === 'g') {
+                e.preventDefault();
+                generateScramble();
+            }
         });
     </script>
 </body>
