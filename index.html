@@ -990,6 +990,7 @@
             padding-left: 60px;
         }
 
+        .tip-box::
         .tip-box::before {
             content: "💡";
             position: absolute;
@@ -2358,6 +2359,25 @@
         let pendingAction = null;
         let pendingActionData = null;
 
+        // ========== SECURITY: ADMIN VERIFICATION ==========
+        async function verifyAdmin() {
+            if (!currentUser || !currentUserData) {
+                showNotification('You must be logged in', 'error');
+                return false;
+            }
+            
+            // Re-fetch user data from Firebase to prevent console manipulation
+            const userData = await Database.getUser(currentUser.uid);
+            
+            if (!userData || userData.role !== 'admin') {
+                showNotification('Unauthorized: Admin access required', 'error');
+                console.warn('Unauthorized admin access attempt by:', currentUser.email);
+                return false;
+            }
+            
+            return true;
+        }
+
         // ========== AUTHENTICATION FUNCTIONS ==========
         function openAuth() {
             document.getElementById('authModal').classList.add('active');
@@ -2417,6 +2437,7 @@
                 if (firebaseInitialized) {
                     analytics.logEvent('sign_up', { method: 'email' });
                 }
+                showNotification('Account created successfully!', 'success');
                 closeAuth();
             } catch (error) {
                 console.error('Signup error:', error);
@@ -2433,6 +2454,7 @@
                 if (firebaseInitialized) {
                     analytics.logEvent('login', { method: 'email' });
                 }
+                showNotification('Logged in successfully!', 'success');
                 closeAuth();
             } catch (error) {
                 console.error('Login error:', error);
@@ -2443,6 +2465,7 @@
         async function logout() {
             try {
                 await auth.signOut();
+                showNotification('Logged out successfully!', 'success');
             } catch (error) {
                 console.error('Logout error:', error);
             }
@@ -2489,7 +2512,8 @@
             const ms = Math.floor(elapsedTime % 1000);
             
             document.getElementById('timerDisplay').textContent = 
-                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(ms).
+padStart(3, '0')}`;
         }
 
         async function updateStats() {
@@ -2594,7 +2618,13 @@
             }
         }
 
-        function toggleAdminPanel() {
+        // ========== SECURED ADMIN PANEL FUNCTIONS ==========
+        async function toggleAdminPanel() {
+            if (!await verifyAdmin()) {
+                document.getElementById('adminPanel').classList.remove('active');
+                return;
+            }
+            
             const panel = document.getElementById('adminPanel');
             panel.classList.toggle('active');
             if (panel.classList.contains('active')) {
@@ -2611,6 +2641,8 @@
         }
 
         async function updateAdminPanel() {
+            if (!await verifyAdmin()) return;
+            
             const stats = await Database.getStats();
             
             document.getElementById('totalUsers').textContent = stats.totalUsers;
@@ -2624,6 +2656,8 @@
         }
 
         async function updateUsersTable() {
+            if (!await verifyAdmin()) return;
+            
             const tbody = document.getElementById('usersTableBody');
             tbody.innerHTML = '';
             
@@ -2657,6 +2691,8 @@
         }
 
         async function updateTimesTable() {
+            if (!await verifyAdmin()) return;
+            
             const tbody = document.getElementById('timesTableBody');
             tbody.innerHTML = '';
             
@@ -2668,10 +2704,13 @@
                 const row = document.createElement('tr');
                 if (time.time < 5) row.style.background = 'rgba(239, 68, 68, 0.1)';
                 
+                const dateStr = time.date?.toDate ? time.date.toDate().toLocaleDateString() : 
+                               (time.date ? new Date(time.date).toLocaleDateString() : 'Unknown');
+                
                 row.innerHTML = `
                     <td>${user?.username || 'Unknown'}</td>
                     <td>${time.time.toFixed(2)}s</td>
-                    <td>${time.date?.toDate().toLocaleDateString() || 'Unknown'}</td>
+                    <td>${dateStr}</td>
                     <td class="user-actions">
                         <button class="action-btn delete" onclick="showConfirmModal('deleteTime', 'Delete this time record?', '${time.id}')">Delete</button>
                     </td>
@@ -2706,6 +2745,12 @@
         async function confirmAction() {
             if (!pendingAction) return;
             
+            // Verify admin for all admin actions except resetEverything (local only)
+            if (pendingAction !== 'resetEverything' && !await verifyAdmin()) {
+                closeModal();
+                return;
+            }
+            
             try {
                 switch(pendingAction) {
                     case 'deleteUser':
@@ -2724,17 +2769,16 @@
                         await Database.deleteTime(pendingActionData);
                         break;
                     case 'clearAllTimes':
-                        // This would need to be implemented differently in Firebase
-                        showNotification('This feature requires manual implementation in Firebase', 'warning');
+                        showNotification('This feature requires manual implementation in Firebase Console', 'warning');
                         break;
                     case 'clearSuspiciousTimes':
-                        showNotification('This feature requires manual implementation in Firebase', 'warning');
+                        showNotification('This feature requires manual implementation in Firebase Console', 'warning');
                         break;
                     case 'clearAllUsers':
-                        showNotification('This feature requires manual implementation in Firebase', 'warning');
+                        showNotification('This feature requires manual implementation in Firebase Console', 'warning');
                         break;
                     case 'clearBannedUsers':
-                        showNotification('This feature requires manual implementation in Firebase', 'warning');
+                        showNotification('This feature requires manual implementation in Firebase Console', 'warning');
                         break;
                     case 'resetEverything':
                         localStorage.clear();
