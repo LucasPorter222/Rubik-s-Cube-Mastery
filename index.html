@@ -990,7 +990,6 @@
             padding-left: 60px;
         }
 
-        .tip-box::
         .tip-box::before {
             content: "💡";
             position: absolute;
@@ -2018,6 +2017,95 @@
     <div class="copy-feedback" id="copyFeedback">Copied to clipboard!</div>
 
     <script>
+        // ========== SECURITY CONFIGURATION ==========
+        const SECURITY_CONFIG = {
+            MAX_LOGIN_ATTEMPTS: 5,
+            LOCKOUT_TIME: 15 * 60 * 1000, // 15 minutes
+            CSRF_TOKEN_EXPIRY: 30 * 60 * 1000 // 30 minutes
+        };
+
+        // ========== SECURITY UTILITIES ==========
+        const SecurityUtils = {
+            // Input sanitization to prevent XSS
+            sanitizeInput(input) {
+                if (typeof input !== 'string') return input;
+                
+                const div = document.createElement('div');
+                div.textContent = input;
+                return div.innerHTML;
+            },
+
+            // Escape HTML to prevent injection
+            escapeHtml(unsafe) {
+                if (typeof unsafe !== 'string') return unsafe;
+                
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            },
+
+            // Validate email format
+            isValidEmail(email) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(email);
+            },
+
+            // Validate password strength
+            isValidPassword(password) {
+                return password && password.length >= 6;
+            },
+
+            // Generate CSRF token
+            generateCSRFToken() {
+                const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+                const expiry = Date.now() + SECURITY_CONFIG.CSRF_TOKEN_EXPIRY;
+                localStorage.setItem('csrfToken', token);
+                localStorage.setItem('csrfExpiry', expiry.toString());
+                return token;
+            },
+
+            // Validate CSRF token
+            validateCSRFToken(token) {
+                const storedToken = localStorage.getItem('csrfToken');
+                const storedExpiry = parseInt(localStorage.getItem('csrfExpiry') || '0');
+                
+                if (!storedToken || !storedExpiry || Date.now() > storedExpiry) {
+                    return false;
+                }
+                
+                return storedToken === token;
+            },
+
+            // Rate limiting for authentication
+            checkRateLimit() {
+                const attempts = JSON.parse(localStorage.getItem('loginAttempts') || '[]');
+                const now = Date.now();
+                const recentAttempts = attempts.filter(time => now - time < SECURITY_CONFIG.LOCKOUT_TIME);
+                
+                if (recentAttempts.length >= SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS) {
+                    const nextAttempt = recentAttempts[0] + SECURITY_CONFIG.LOCKOUT_TIME;
+                    return { limited: true, retryAfter: nextAttempt - now };
+                }
+                
+                return { limited: false };
+            },
+
+            // Record login attempt
+            recordLoginAttempt() {
+                const attempts = JSON.parse(localStorage.getItem('loginAttempts') || '[]');
+                attempts.push(Date.now());
+                localStorage.setItem('loginAttempts', JSON.stringify(attempts));
+            },
+
+            // Clear rate limiting on successful login
+            clearRateLimit() {
+                localStorage.removeItem('loginAttempts');
+            }
+        };
+
         // ========== FIREBASE CONFIGURATION ==========
         const firebaseConfig = {
             apiKey: "AIzaSyBdLy_17UqY5f3V4w-34d-eJKuq3bkMnOc",
@@ -2048,7 +2136,7 @@
             document.getElementById('firebaseStatus').classList.add('error');
         }
 
-        // ========== DATABASE SYSTEM WITH FALLBACK ==========
+        // ========== SECURE DATABASE SYSTEM ==========
         const Database = {
             // Use Firebase if available, otherwise use localStorage
             async addUser(user) {
@@ -2056,12 +2144,14 @@
                     return this.localAddUser(user);
                 }
                 try {
+                    // Server-side verification would be needed for production
                     await db.collection('users').doc(user.uid).set({
-                        username: user.username,
-                        email: user.email,
+                        username: SecurityUtils.sanitizeInput(user.username),
+                        email: SecurityUtils.sanitizeInput(user.email),
                         role: user.role,
                         joined: firebase.firestore.FieldValue.serverTimestamp(),
-                        banned: false
+                        banned: false,
+                        lastActive: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     return true;
                 } catch (error) {
@@ -2101,7 +2191,17 @@
                     return this.localUpdateUser(uid, data);
                 }
                 try {
-                    await db.collection('users').doc(uid).update(data);
+                    // Sanitize user input before updating
+                    const sanitizedData = {};
+                    Object.keys(data).forEach(key => {
+                        if (typeof data[key] === 'string') {
+                            sanitizedData[key] = SecurityUtils.sanitizeInput(data[key]);
+                        } else {
+                            sanitizedData[key] = data[key];
+                        }
+                    });
+                    
+                    await db.collection('users').doc(uid).update(sanitizedData);
                     return true;
                 } catch (error) {
                     console.error('Firebase updateUser failed, falling back to localStorage:', error);
@@ -2131,7 +2231,8 @@
                     await db.collection('times').add({
                         uid: uid,
                         time: time,
-                        date: firebase.firestore.FieldValue.serverTimestamp()
+                        date: firebase.firestore.FieldValue.serverTimestamp(),
+                        csrfToken: SecurityUtils.generateCSRFToken()
                     });
                     return true;
                 } catch (error) {
@@ -2203,10 +2304,15 @@
                 }
             },
 
-            // Local Storage implementations
+            // Local Storage implementations with security
             localAddUser(user) {
                 const users = JSON.parse(localStorage.getItem('cubeUsers')) || [];
-                users.push({ ...user, joined: new Date().toISOString() });
+                users.push({ 
+                    ...user, 
+                    username: SecurityUtils.sanitizeInput(user.username),
+                    email: SecurityUtils.sanitizeInput(user.email),
+                    joined: new Date().toISOString() 
+                });
                 localStorage.setItem('cubeUsers', JSON.stringify(users));
                 return true;
             },
@@ -2224,7 +2330,17 @@
                 const users = JSON.parse(localStorage.getItem('cubeUsers')) || [];
                 const index = users.findIndex(u => u.uid === uid);
                 if (index !== -1) {
-                    users[index] = { ...users[index], ...data };
+                    // Sanitize input before updating
+                    const sanitizedData = {};
+                    Object.keys(data).forEach(key => {
+                        if (typeof data[key] === 'string') {
+                            sanitizedData[key] = SecurityUtils.sanitizeInput(data[key]);
+                        } else {
+                            sanitizedData[key] = data[key];
+                        }
+                    });
+                    
+                    users[index] = { ...users[index], ...sanitizedData };
                     localStorage.setItem('cubeUsers', JSON.stringify(users));
                     return true;
                 }
@@ -2245,7 +2361,8 @@
                     uid: uid,
                     time: time,
                     date: new Date().toISOString(),
-                    id: Date.now() + Math.random()
+                    id: Date.now() + Math.random(),
+                    csrfToken: SecurityUtils.generateCSRFToken()
                 });
                 localStorage.setItem('cubeTimes', JSON.stringify(times));
                 return true;
@@ -2359,7 +2476,7 @@
         let pendingAction = null;
         let pendingActionData = null;
 
-        // ========== SECURITY: ADMIN VERIFICATION ==========
+        // ========== SECURE ADMIN VERIFICATION ==========
         async function verifyAdmin() {
             if (!currentUser || !currentUserData) {
                 showNotification('You must be logged in', 'error');
@@ -2378,7 +2495,7 @@
             return true;
         }
 
-        // ========== AUTHENTICATION FUNCTIONS ==========
+        // ========== SECURE AUTHENTICATION FUNCTIONS ==========
         function openAuth() {
             document.getElementById('authModal').classList.add('active');
         }
@@ -2408,17 +2525,28 @@
         }
 
         async function signup() {
-            const username = document.getElementById('signupUsername').value.trim();
-            const email = document.getElementById('signupEmail').value.trim();
+            const username = SecurityUtils.sanitizeInput(document.getElementById('signupUsername').value.trim());
+            const email = SecurityUtils.sanitizeInput(document.getElementById('signupEmail').value.trim());
             const password = document.getElementById('signupPassword').value;
 
+            // Input validation
             if (!username || !email || !password) {
                 showAuthError('signup', 'Please fill in all fields');
                 return;
             }
 
-            if (password.length < 6) {
+            if (!SecurityUtils.isValidEmail(email)) {
+                showAuthError('signup', 'Please enter a valid email address');
+                return;
+            }
+
+            if (!SecurityUtils.isValidPassword(password)) {
                 showAuthError('signup', 'Password must be at least 6 characters');
+                return;
+            }
+
+            if (username.length > 20) {
+                showAuthError('signup', 'Username must be less than 20 characters');
                 return;
             }
 
@@ -2446,11 +2574,21 @@
         }
 
         async function login() {
-            const email = document.getElementById('loginEmail').value.trim();
+            const email = SecurityUtils.sanitizeInput(document.getElementById('loginEmail').value.trim());
             const password = document.getElementById('loginPassword').value;
+
+            // Rate limiting check
+            const rateLimit = SecurityUtils.checkRateLimit();
+            if (rateLimit.limited) {
+                const minutes = Math.ceil(rateLimit.retryAfter / 60000);
+                showAuthError('login', `Too many login attempts. Try again in ${minutes} minutes.`);
+                return;
+            }
 
             try {
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                SecurityUtils.clearRateLimit(); // Clear rate limiting on successful login
+                
                 if (firebaseInitialized) {
                     analytics.logEvent('login', { method: 'email' });
                 }
@@ -2458,6 +2596,7 @@
                 closeAuth();
             } catch (error) {
                 console.error('Login error:', error);
+                SecurityUtils.recordLoginAttempt(); // Record failed attempt
                 showAuthError('login', error.message);
             }
         }
@@ -2471,7 +2610,7 @@
             }
         }
 
-        // ========== TIMER FUNCTIONS ==========
+        // ========== SECURE TIMER FUNCTIONS ==========
         function startTimer() {
             if (timerInterval) return;
             startTime = Date.now() - elapsedTime;
@@ -2484,6 +2623,14 @@
             timerInterval = null;
             
             const time = elapsedTime / 1000;
+            
+            // Validate time (prevent impossible times)
+            if (time < 0.1 || time > 3600) { // Less than 0.1s or more than 1 hour
+                showNotification('Invalid time recorded', 'warning');
+                resetTimer();
+                return;
+            }
+            
             times.push(time);
             localStorage.setItem('cubeTimes', JSON.stringify(times));
             
@@ -2499,8 +2646,10 @@
         }
 
         function resetTimer() {
-            clearInterval(timerInterval);
-            timerInterval = null;
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
             elapsedTime = 0;
             document.getElementById('timerDisplay').textContent = '00:00.000';
         }
@@ -2512,12 +2661,12 @@
             const ms = Math.floor(elapsedTime % 1000);
             
             document.getElementById('timerDisplay').textContent = 
-                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(ms).
-padStart(3, '0')}`;
+                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
         }
 
         async function updateStats() {
-            times = times.filter(t => !isNaN(t) && t > 0).map(t => Number(t));
+            // Filter out invalid times
+            times = times.filter(t => !isNaN(t) && t > 0.1 && t < 3600).map(t => Number(t));
             
             const current = times.length > 0 ? times[times.length - 1].toFixed(2) : '--';
             const best = times.length > 0 ? Math.min(...times).toFixed(2) : '--';
@@ -2540,18 +2689,24 @@ padStart(3, '0')}`;
             }
         }
 
-        // ========== OTHER FUNCTIONS ==========
+        // ========== SECURE OTHER FUNCTIONS ==========
         const moves = ['R', 'R\'', 'R2', 'L', 'L\'', 'L2', 'U', 'U\'', 'U2', 'D', 'D\'', 'D2', 'F', 'F\'', 'F2', 'B', 'B\'', 'B2'];
         
         function generateScramble() {
             let scramble = [];
             let lastMove = '';
+            let attempts = 0;
+            const maxAttempts = 100; // Prevent infinite loops
             
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 20 && attempts < maxAttempts; i++) {
                 let move;
                 do {
                     move = moves[Math.floor(Math.random() * moves.length)];
-                } while (move[0] === lastMove);
+                    attempts++;
+                    if (attempts >= maxAttempts) break;
+                } while (move[0] === lastMove && attempts < maxAttempts);
+                
+                if (attempts >= maxAttempts) break;
                 
                 scramble.push(move);
                 lastMove = move[0];
@@ -2568,8 +2723,10 @@ padStart(3, '0')}`;
         }
 
         async function showLeaderboard(type) {
-            document.querySelectorAll('.leaderboard-tab').forEach(tab => tab.classList.remove('active'));
-            event.target.classList.add('active');
+            if (event) {
+                document.querySelectorAll('.leaderboard-tab').forEach(tab => tab.classList.remove('active'));
+                event.target.classList.add('active');
+            }
             await updateLeaderboard(type);
         }
 
@@ -2600,11 +2757,14 @@ padStart(3, '0')}`;
                 const row = document.createElement('tr');
                 if (index < 3) row.classList.add(`rank-${index + 1}`);
                 
+                // Escape username to prevent XSS
+                const safeUsername = SecurityUtils.escapeHtml(user.username);
+                
                 row.innerHTML = `
                     <td>
                         ${index < 3 ? `<span class="rank-badge">${index + 1}</span>` : `<span style="margin-left: 40px;">${index + 1}</span>`}
                     </td>
-                    <td>${user.username}</td>
+                    <td>${safeUsername}</td>
                     <td>${user.bestTime.toFixed(2)}s</td>
                     <td>${user.avg5}s</td>
                     <td>${user.totalSolves}</td>
@@ -2618,7 +2778,7 @@ padStart(3, '0')}`;
             }
         }
 
-        // ========== SECURED ADMIN PANEL FUNCTIONS ==========
+        // ========== SECURE ADMIN PANEL FUNCTIONS ==========
         async function toggleAdminPanel() {
             if (!await verifyAdmin()) {
                 document.getElementById('adminPanel').classList.remove('active');
@@ -2668,20 +2828,24 @@ padStart(3, '0')}`;
                 const row = document.createElement('tr');
                 if (user.banned) row.classList.add('banned-user');
                 
+                // Escape all user data to prevent XSS
+                const safeUsername = SecurityUtils.escapeHtml(user.username);
+                const safeEmail = SecurityUtils.escapeHtml(user.email);
+                
                 row.innerHTML = `
-                    <td>${user.username}</td>
-                    <td>${user.email}</td>
+                    <td>${safeUsername}</td>
+                    <td>${safeEmail}</td>
                     <td>${user.role}</td>
                     <td>${stats ? stats.totalSolves : 0}</td>
                     <td>${stats && stats.bestTime ? stats.bestTime.toFixed(2) + 's' : '--'}</td>
                     <td>${user.banned ? '🚫 Banned' : '✅ Active'}</td>
                     <td class="user-actions">
                         ${user.role !== 'admin' ? `
-                            <button class="action-btn delete" onclick="showConfirmModal('deleteUser', 'Delete user ${user.username}?', '${user.uid}')">Delete</button>
-                            <button class="action-btn ban" onclick="showConfirmModal('${user.banned ? 'unbanUser' : 'banUser'}', '${user.banned ? 'Unban' : 'Ban'} user ${user.username}?', '${user.uid}')">
+                            <button class="action-btn delete" onclick="showConfirmModal('deleteUser', 'Delete user ${safeUsername}?', '${user.uid}')">Delete</button>
+                            <button class="action-btn ban" onclick="showConfirmModal('${user.banned ? 'unbanUser' : 'banUser'}', '${user.banned ? 'Unban' : 'Ban'} user ${safeUsername}?', '${user.uid}')">
                                 ${user.banned ? 'Unban' : 'Ban'}
                             </button>
-                            <button class="action-btn warn" onclick="showConfirmModal('deleteUserTimes', 'Delete all times for ${user.username}?', '${user.uid}')">Clear Times</button>
+                            <button class="action-btn warn" onclick="showConfirmModal('deleteUserTimes', 'Delete all times for ${safeUsername}?', '${user.uid}')">Clear Times</button>
                         ` : '🔒 Protected'}
                     </td>
                 `;
@@ -2707,8 +2871,11 @@ padStart(3, '0')}`;
                 const dateStr = time.date?.toDate ? time.date.toDate().toLocaleDateString() : 
                                (time.date ? new Date(time.date).toLocaleDateString() : 'Unknown');
                 
+                // Escape username
+                const safeUsername = SecurityUtils.escapeHtml(user?.username || 'Unknown');
+                
                 row.innerHTML = `
-                    <td>${user?.username || 'Unknown'}</td>
+                    <td>${safeUsername}</td>
                     <td>${time.time.toFixed(2)}s</td>
                     <td>${dateStr}</td>
                     <td class="user-actions">
@@ -2822,7 +2989,7 @@ padStart(3, '0')}`;
             const notification = document.createElement('div');
             notification.className = `notification ${type}`;
             notification.innerHTML = `
-                <span>${message}</span>
+                <span>${SecurityUtils.escapeHtml(message)}</span>
                 <button onclick="this.parentElement.remove()">×</button>
             `;
             
@@ -2852,11 +3019,16 @@ padStart(3, '0')}`;
         function searchContent() {
             const query = document.getElementById('searchInput').value.toLowerCase();
             const sections = document.querySelectorAll('.content-section');
+            const tabs = document.querySelectorAll('.tab-btn');
             
             if (query === '') {
                 sections.forEach(s => s.classList.remove('hidden'));
+                tabs.forEach(t => t.style.display = '');
                 return;
             }
+            
+            // Hide all tabs when searching
+            tabs.forEach(t => t.style.display = 'none');
             
             sections.forEach(section => {
                 const text = section.textContent.toLowerCase();
@@ -2955,7 +3127,10 @@ padStart(3, '0')}`;
                 currentUserData = await Database.getUser(currentUser.uid);
                 
                 if (currentUserData) {
-                    userAvatar.textContent = currentUserData.username.charAt(0).toUpperCase();
+                    // Escape username for display
+                    const safeUsername = SecurityUtils.escapeHtml(currentUserData.username);
+                    
+                    userAvatar.textContent = safeUsername.charAt(0).toUpperCase();
                     if (currentUserData.role === 'admin') {
                         userAvatar.classList.add('admin');
                         userRoleSpan.textContent = 'admin';
@@ -2968,7 +3143,7 @@ padStart(3, '0')}`;
                         adminPanelBtn.style.display = 'none';
                     }
                     
-                    usernameSpan.textContent = currentUserData.username;
+                    usernameSpan.textContent = safeUsername;
                     
                     const stats = await Database.getUserStats(currentUser.uid);
                     userStatsSpan.textContent = stats ? `${stats.totalSolves} solves` : '0 solves';
@@ -3023,6 +3198,7 @@ padStart(3, '0')}`;
             generateScramble();
             updateLeaderboard();
             
+            // Restore dark mode preference
             if (localStorage.getItem('darkMode') === 'true') {
                 document.body.classList.add('dark-mode');
                 document.getElementById('darkModeIcon').textContent = '☀️';
@@ -3043,6 +3219,13 @@ padStart(3, '0')}`;
             if (e.ctrlKey && e.key === 'g') {
                 e.preventDefault();
                 generateScramble();
+            }
+        });
+
+        // Clean up timer interval when page unloads to prevent memory leaks
+        window.addEventListener('beforeunload', function() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
             }
         });
     </script>
