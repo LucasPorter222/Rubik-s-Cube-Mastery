@@ -10,15 +10,34 @@
     <meta name="author" content="Rubik's Cube Mastery">
     <meta name="google-adsense-account" content="ca-pub-1612080142682351">
     
-    
     <!-- Open Graph tags for social sharing -->
     <meta property="og:title" content="Rubik's Cube Mastery | Complete Tutorial">
     <meta property="og:description" content="Your complete guide from beginner to speedcuber - master the cube with step-by-step tutorials and practice tools">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://rubikscubemastery.online/">
+    <meta property="og:image" content="https://rubikscubemastery.online/images/og-image.jpg">
     
     <!-- Canonical URL -->
     <link rel="canonical" href="https://rubikscubemastery.online/">
+    
+    <!-- Schema.org structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Rubik's Cube Mastery",
+      "url": "https://rubikscubemastery.online/",
+      "description": "Complete Rubik's Cube tutorial from beginner to advanced speedcubing techniques",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Rubik's Cube Mastery",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://rubikscubemastery.online/images/logo.png"
+        }
+      }
+    }
+    </script>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23dc2626' x='0' y='0' width='33' height='33'/><rect fill='%2316a34a' x='34' y='0' width='33' height='33'/><rect fill='%23fff' x='67' y='0' width='33' height='33'/><rect fill='%23ea580c' x='0' y='34' width='33' height='33'/><rect fill='%23fbbf24' x='34' y='34' width='33' height='33'/><rect fill='%232563eb' x='67' y='34' width='33' height='33'/><rect fill='%23fff' x='0' y='67' width='33' height='33'/><rect fill='%232563eb' x='34' y='67' width='33' height='33'/><rect fill='%2316a34a' x='67' y='67' width='33' height='33'/></svg>" type="image/svg+xml">
     
@@ -30,6 +49,8 @@
 
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1612080142682351"
      crossorigin="anonymous"></script>
+    
+    <!-- Umami Analytics -->
     <script defer src="https://cloud.umami.is/script.js" data-website-id="d0c6fc8b-3acf-429f-b5f4-af09e40975de"></script>
     
     <style>
@@ -1204,6 +1225,37 @@
             background: var(--danger);
         }
 
+        /* Access Restricted Message */
+        .access-restricted {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px var(--shadow);
+        }
+
+        .access-restricted.active {
+            display: block;
+        }
+
+        .access-restricted h2 {
+            color: var(--accent);
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .access-restricted p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
         @media print {
             .toolbar, .timer-section, .scramble-section, .nav-tabs, footer {
                 display: none !important;
@@ -1388,6 +1440,13 @@
             <p class="tagline">Your complete guide from beginner to speedcuber - master the cube with step-by-step tutorials and practice tools</p>
         </header>
 
+        <!-- Access Restricted Message -->
+        <div class="access-restricted" id="accessRestricted">
+            <h2>🔒 Access Restricted</h2>
+            <p>You need to be signed in to access the full content of Rubik's Cube Mastery. Please log in or create an account to continue.</p>
+            <button class="icon-btn" onclick="openAuth()">Sign In / Sign Up</button>
+        </div>
+
         <!-- Admin Panel -->
         <div class="admin-panel" id="adminPanel">
             <h2 style="border: none; margin-bottom: 10px;">⚙️ Admin Panel</h2>
@@ -1500,7 +1559,7 @@
         </div>
 
         <!-- Leaderboard Section -->
-        <div class="leaderboard-section">
+        <div class="leaderboard-section" id="leaderboardSection">
             <h2 style="border: none; margin-bottom: 10px;">🏆 Speedcubing Leaderboard</h2>
             <div class="leaderboard-tabs">
                 <button class="leaderboard-tab active" onclick="showLeaderboard('global')">Global</button>
@@ -1526,7 +1585,7 @@
         </div>
 
         <!-- Timer Section -->
-        <div class="timer-section">
+        <div class="timer-section" id="timerSection">
             <h2 style="border: none; margin-bottom: 10px;">⏱️ Speedcube Timer</h2>
             <div class="timer-display" id="timerDisplay">00:00.000</div>
             <div class="timer-controls">
@@ -1555,7 +1614,7 @@
         </div>
 
         <!-- Scramble Section -->
-        <div class="scramble-section">
+        <div class="scramble-section" id="scrambleSection">
             <h2 style="border: none; margin-bottom: 10px;">🎲 Scramble Generator</h2>
             <div class="scramble-display" id="scrambleDisplay">Click "New Scramble" to generate</div>
             <div class="scramble-controls">
@@ -1564,7 +1623,7 @@
             </div>
         </div>
 
-        <div class="nav-tabs">
+        <div class="nav-tabs" id="navTabs">
             <button class="tab-btn active" onclick="showTab('basics')">Basics</button>
             <button class="tab-btn" onclick="showTab('notation')">Notation</button>
             <button class="tab-btn" onclick="showTab('beginner')">Beginner Method</button>
@@ -2482,6 +2541,40 @@
         let pendingAction = null;
         let pendingActionData = null;
 
+        // ========== ACCESS CONTROL ==========
+        function toggleContentAccess(isLoggedIn) {
+            const restrictedElements = [
+                'leaderboardSection',
+                'timerSection',
+                'scrambleSection',
+                'navTabs',
+                'basics',
+                'notation',
+                'beginner',
+                'cfop',
+                'advanced',
+                'tips'
+            ];
+            
+            const accessRestricted = document.getElementById('accessRestricted');
+            
+            if (isLoggedIn) {
+                // Show all content
+                restrictedElements.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) element.style.display = '';
+                });
+                accessRestricted.classList.remove('active');
+            } else {
+                // Hide content and show restricted message
+                restrictedElements.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) element.style.display = 'none';
+                });
+                accessRestricted.classList.add('active');
+            }
+        }
+
         // ========== SECURE ADMIN VERIFICATION ==========
         async function verifyAdmin() {
             if (!currentUser || !currentUserData) {
@@ -3154,10 +3247,16 @@
                     const stats = await Database.getUserStats(currentUser.uid);
                     userStatsSpan.textContent = stats ? `${stats.totalSolves} solves` : '0 solves';
                 }
+                
+                // Show content for logged-in users
+                toggleContentAccess(true);
             } else {
                 authBtn.style.display = 'flex';
                 userProfile.classList.remove('active');
                 adminPanelBtn.style.display = 'none';
+                
+                // Hide content for non-logged-in users
+                toggleContentAccess(false);
             }
             
             await updateLeaderboard();
