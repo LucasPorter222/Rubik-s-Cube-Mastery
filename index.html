@@ -1549,6 +1549,9 @@
                     <button class="control-btn" onclick="restoreBackup()" style="background: var(--accent); color: white;">
                         📥 Restore Backup
                     </button>
+                    <button class="control-btn" onclick="showBackupHistory()" style="background: var(--admin); color: white;">
+                        📊 Backup History
+                    </button>
                 </div>
                 <div style="margin-top: 20px;">
                     <h4>System Information</h4>
@@ -1693,7 +1696,7 @@
             </ul>
         </div>
 
-        <div id="notation" class="content-section">
+               <div id="notation" class="content-section">
             <h2>Cube Notation Guide</h2>
             <p>Understanding notation is essential for following algorithms. Each letter represents a face turn:</p>
 
@@ -2111,6 +2114,368 @@
             console.error('Firebase initialization failed:', error);
             document.getElementById('firebaseStatus').textContent = 'Firebase: Using Local Storage';
             document.getElementById('firebaseStatus').classList.add('error');
+        }
+
+        // ========== ADMIN FUNCTIONS ==========
+        async function checkAdminStatus() {
+            if (!currentUser || !firebaseInitialized) return false;
+            
+            try {
+                const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                return userDoc.exists && userDoc.data().role === 'admin';
+            } catch (error) {
+                console.error('Error checking admin status:', error);
+                return false;
+            }
+        }
+
+        async function performAdminAction(action, userId) {
+            try {
+                const isAdmin = await checkAdminStatus();
+                if (!isAdmin) {
+                    showNotification('Admin privileges required', 'error');
+                    return false;
+                }
+
+                // Prevent self-harm
+                if (userId === currentUser.uid && (action === 'deleteUser' || action === 'banUser')) {
+                    showNotification(`Cannot ${action.replace('User', '')} your own account`, 'error');
+                    return false;
+                }
+
+                switch(action) {
+                    case 'banUser':
+                        await db.collection('users').doc(userId).update({ 
+                            banned: true,
+                            bannedAt: new Date().toISOString()
+                        });
+                        showNotification('User banned successfully', 'success');
+                        break;
+                        
+                    case 'unbanUser':
+                        await db.collection('users').doc(userId).update({ 
+                            banned: false,
+                            bannedAt: null
+                        });
+                        showNotification('User unbanned successfully', 'success');
+                        break;
+                        
+                    case 'deleteUser':
+                        // Double-check we're not deleting an admin
+                        const userToDelete = await db.collection('users').doc(userId).get();
+                        if (userToDelete.exists && userToDelete.data().role === 'admin') {
+                            showNotification('Cannot delete admin accounts', 'error');
+                            return false;
+                        }
+                        
+                        await db.collection('users').doc(userId).delete();
+                        
+                        // Also delete user's times
+                        const userTimes = await db.collection('times').where('uid', '==', userId).get();
+                        const batch = db.batch();
+                        userTimes.docs.forEach(doc => {
+                            batch.delete(doc.ref);
+                        });
+                        await batch.commit();
+                        
+                        showNotification('User deleted successfully', 'success');
+                        break;
+                        
+                    case 'deleteUserTimes':
+                        const times = await db.collection('times').where('uid', '==', userId).get();
+                        const timeBatch = db.batch();
+                        times.docs.forEach(doc => {
+                            timeBatch.delete(doc.ref);
+                        });
+                        await timeBatch.commit();
+                        showNotification('User times cleared successfully', 'success');
+                        break;
+
+                    case 'deleteTime':
+                        await db.collection('times').doc(userId).delete();
+                        showNotification('Time record deleted successfully', 'success');
+                        break;
+                }
+                
+                await updateAdminPanel();
+                return true;
+            } catch (error) {
+                console.error('Admin action failed:', error);
+                showNotification('Action failed: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // ========== BACKUP FUNCTIONS ==========
+        async function createBackup() {
+            try {
+                const isAdmin = await checkAdminStatus();
+                if (!isAdmin) {
+                    showNotification('Admin privileges required', 'error');
+                    return;
+                }
+
+                showNotification('Creating backup...', 'info');
+                
+                // Get all data from Firebase
+                const [usersSnapshot, timesSnapshot] = await Promise.all([
+                    db.collection('users').get(),
+                    db.collection('times').get()
+                ]);
+
+                const users = usersSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    // Convert Firestore timestamps to ISO strings for backup
+                    joined: doc.data().joined?.toDate ? doc.data().joined.toDate().toISOString() : doc.data().joined,
+                    lastActive: doc.data().lastActive?.toDate ? doc.data().lastActive.toDate().toISOString() : doc.data().lastActive
+                }));
+
+                const times = timesSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    date: doc.data().date?.toDate ? doc.data().date.toDate().toISOString() : doc.data().date
+                }));
+
+                const backupData = {
+                    version: '1.0',
+                    timestamp: new Date().toISOString(),
+                    data: {
+                        users: users,
+                        times: times
+                    },
+                    stats: {
+                        totalUsers: users.length,
+                        totalTimes: times.length,
+                        backupType: 'manual'
+                    }
+                };
+
+                // Create downloadable backup file
+                const backupBlob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+                const backupUrl = URL.createObjectURL(backupBlob);
+                
+                const downloadLink = document.createElement('a');
+                downloadLink.href = backupUrl;
+                downloadLink.download = `rubiks-cube-backup-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+                URL.revokeObjectURL(backupUrl);
+
+                // Also save backup info to Firebase for tracking
+                await db.collection('backups').add({
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    type: 'manual',
+                    userCount: users.length,
+                    timeCount: times.length,
+                    createdBy: currentUser.uid,
+                    fileName: downloadLink.download
+                });
+
+                showNotification(`Backup created successfully! ${users.length} users, ${times.length} times`, 'success');
+                
+            } catch (error) {
+                console.error('Backup creation failed:', error);
+                showNotification('Backup failed: ' + error.message, 'error');
+            }
+        }
+
+        async function restoreBackup() {
+            try {
+                const isAdmin = await checkAdminStatus();
+                if (!isAdmin) {
+                    showNotification('Admin privileges required', 'error');
+                    return;
+                }
+
+                // Create file input for backup selection
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = '.json';
+                fileInput.style.display = 'none';
+                
+                fileInput.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    try {
+                        showNotification('Reading backup file...', 'info');
+                        
+                        const fileText = await file.text();
+                        const backupData = JSON.parse(fileText);
+                        
+                        // Validate backup file structure
+                        if (!backupData.data || !backupData.data.users || !backupData.data.times) {
+                            throw new Error('Invalid backup file format');
+                        }
+
+                        // Show confirmation with backup details
+                        showConfirmModal('restoreBackup', 
+                            `Restore backup from ${new Date(backupData.timestamp).toLocaleString()}? 
+                            \n\nThis will restore:
+                            • ${backupData.data.users.length} users
+                            • ${backupData.data.times.length} time records
+                            \n⚠️ Warning: This may overwrite existing data!`, 
+                            backupData
+                        );
+                        
+                    } catch (error) {
+                        console.error('Backup file error:', error);
+                        showNotification('Invalid backup file: ' + error.message, 'error');
+                    }
+                    
+                    document.body.removeChild(fileInput);
+                };
+
+                document.body.appendChild(fileInput);
+                fileInput.click();
+                
+            } catch (error) {
+                console.error('Restore backup failed:', error);
+                showNotification('Restore failed: ' + error.message, 'error');
+            }
+        }
+
+        async function performBackupRestore(backupData) {
+            try {
+                showNotification('Starting restore process...', 'info');
+                
+                const { users, times } = backupData.data;
+                let successCount = 0;
+                let errorCount = 0;
+
+                // Restore users
+                for (const user of users) {
+                    try {
+                        // Convert ISO strings back to Firestore timestamps
+                        const userData = {
+                            ...user,
+                            joined: user.joined ? new Date(user.joined) : firebase.firestore.FieldValue.serverTimestamp(),
+                            lastActive: user.lastActive ? new Date(user.lastActive) : firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                        delete userData.id; // Remove the ID since we'll use it as document ID
+
+                        await db.collection('users').doc(user.id).set(userData, { merge: true });
+                        successCount++;
+                    } catch (error) {
+                        console.error(`Failed to restore user ${user.id}:`, error);
+                        errorCount++;
+                    }
+                }
+
+                // Restore times
+                for (const time of times) {
+                    try {
+                        const timeData = {
+                            ...time,
+                            date: time.date ? new Date(time.date) : firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                        delete timeData.id;
+
+                        await db.collection('times').add(timeData);
+                        successCount++;
+                    } catch (error) {
+                        console.error(`Failed to restore time ${time.id}:`, error);
+                        errorCount++;
+                    }
+                }
+
+                // Log the restore operation
+                await db.collection('backups').add({
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    type: 'restore',
+                    userCount: users.length,
+                    timeCount: times.length,
+                    restoredFrom: backupData.timestamp,
+                    restoredBy: currentUser.uid,
+                    successCount: successCount,
+                    errorCount: errorCount
+                });
+
+                showNotification(`Restore completed! ${successCount} items restored, ${errorCount} errors`, 
+                                errorCount > 0 ? 'warning' : 'success');
+                
+                // Refresh the admin panel to show updated data
+                await updateAdminPanel();
+                
+            } catch (error) {
+                console.error('Restore process failed:', error);
+                showNotification('Restore process failed: ' + error.message, 'error');
+            }
+        }
+
+        async function showBackupHistory() {
+            try {
+                const isAdmin = await checkAdminStatus();
+                if (!isAdmin) return;
+
+                const backupsSnapshot = await db.collection('backups')
+                    .orderBy('timestamp', 'desc')
+                    .limit(10)
+                    .get();
+
+                const backups = backupsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    timestamp: doc.data().timestamp?.toDate ? doc.data().timestamp.toDate() : new Date(doc.data().timestamp)
+                }));
+
+                // Create backup history modal
+                const modal = document.createElement('div');
+                modal.className = 'modal active';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 600px;">
+                        <h3>📊 Backup History</h3>
+                        <div style="max-height: 400px; overflow-y: auto; margin: 20px 0;">
+                            ${backups.length > 0 ? `
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="background: var(--border);">
+                                            <th style="padding: 10px; text-align: left;">Date</th>
+                                            <th style="padding: 10px; text-align: left;">Type</th>
+                                            <th style="padding: 10px; text-align: left;">Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${backups.map(backup => `
+                                            <tr style="border-bottom: 1px solid var(--border);">
+                                                <td style="padding: 10px;">${backup.timestamp.toLocaleString()}</td>
+                                                <td style="padding: 10px;">
+                                                    <span style="padding: 2px 8px; border-radius: 10px; font-size: 0.8em; 
+                                                        background: ${backup.type === 'manual' ? 'var(--success)' : 'var(--accent)'}; 
+                                                        color: white;">
+                                                        ${backup.type}
+                                                    </span>
+                                                </td>
+                                                <td style="padding: 10px;">
+                                                    ${backup.userCount ? `Users: ${backup.userCount}` : ''}
+                                                    ${backup.timeCount ? `, Times: ${backup.timeCount}` : ''}
+                                                    ${backup.successCount !== undefined ? `, Success: ${backup.successCount}` : ''}
+                                                    ${backup.errorCount ? `, Errors: ${backup.errorCount}` : ''}
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            ` : `
+                                <p style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                                    No backup history found
+                                </p>
+                            `}
+                        </div>
+                        <div class="modal-buttons">
+                            <button class="modal-btn cancel" onclick="this.closest('.modal').remove()">Close</button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+                
+            } catch (error) {
+                console.error('Failed to load backup history:', error);
+                showNotification('Failed to load backup history', 'error');
+            }
         }
 
         // ========== FIXED FIREBASE QUERY FUNCTIONS ==========
@@ -2718,7 +3083,10 @@
 
         // ========== ADMIN PANEL FUNCTIONS ==========
         async function toggleAdminPanel() {
-            if (!currentUser || !currentUserData || currentUserData.role !== 'admin') {
+            const isAdmin = await checkAdminStatus();
+            
+            if (!isAdmin) {
+                showNotification('Admin access required', 'error');
                 document.getElementById('adminPanel').classList.remove('active');
                 return;
             }
@@ -2739,7 +3107,8 @@
         }
 
         async function updateAdminPanel() {
-            if (!currentUser || !currentUserData || currentUserData.role !== 'admin') return;
+            const isAdmin = await checkAdminStatus();
+            if (!isAdmin) return;
             
             const stats = await Database.getStats();
             
@@ -2754,7 +3123,8 @@
         }
 
         async function updateUsersTable() {
-            if (!currentUser || !currentUserData || currentUserData.role !== 'admin') return;
+            const isAdmin = await checkAdminStatus();
+            if (!isAdmin) return;
             
             const tbody = document.getElementById('usersTableBody');
             tbody.innerHTML = '';
@@ -2789,7 +3159,8 @@
         }
 
         async function updateTimesTable() {
-            if (!currentUser || !currentUserData || currentUserData.role !== 'admin') return;
+            const isAdmin = await checkAdminStatus();
+            if (!isAdmin) return;
             
             const tbody = document.getElementById('timesTableBody');
             tbody.innerHTML = '';
@@ -2820,7 +3191,7 @@
 
         function updateSystemInfo() {
             document.getElementById('dbSize').textContent = 'Cloud Database';
-            document.getElementById('lastBackup').textContent = 'Auto-backed up';
+            document.getElementById('lastBackup').textContent = new Date().toLocaleString();
             document.getElementById('activeSessions').textContent = 'Real-time';
         }
 
@@ -2841,23 +3212,26 @@
 
         async function confirmAction() {
             if (!pendingAction) return;
-            
+
             try {
                 switch(pendingAction) {
                     case 'deleteUser':
-                        await Database.deleteUser(pendingActionData);
+                        await performAdminAction('deleteUser', pendingActionData);
                         break;
                     case 'banUser':
-                        await Database.updateUser(pendingActionData, { banned: true });
+                        await performAdminAction('banUser', pendingActionData);
                         break;
                     case 'unbanUser':
-                        await Database.updateUser(pendingActionData, { banned: false });
+                        await performAdminAction('unbanUser', pendingActionData);
                         break;
                     case 'deleteUserTimes':
-                        await Database.deleteUserTimes(pendingActionData);
+                        await performAdminAction('deleteUserTimes', pendingActionData);
                         break;
                     case 'deleteTime':
-                        await Database.deleteTime(pendingActionData);
+                        await performAdminAction('deleteTime', pendingActionData);
+                        break;
+                    case 'restoreBackup':
+                        await performBackupRestore(pendingActionData);
                         break;
                     case 'clearAllTimes':
                         showNotification('This feature requires manual implementation in Firebase Console', 'warning');
@@ -2872,15 +3246,18 @@
                         showNotification('This feature requires manual implementation in Firebase Console', 'warning');
                         break;
                     case 'resetEverything':
-                        localStorage.clear();
-                        location.reload();
+                        if (confirm('🚨 DANGER: This will delete ALL data including users and times. This cannot be undone!')) {
+                            localStorage.clear();
+                            // Also clear Firebase data (this would need to be implemented carefully)
+                            showNotification('Local storage cleared. Firebase data would need to be cleared separately.', 'warning');
+                            location.reload();
+                        }
                         return;
                 }
                 
                 closeModal();
                 await updateAdminPanel();
                 updateUI();
-                showNotification('Action completed successfully!', 'success');
             } catch (error) {
                 console.error('Error performing action:', error);
                 showNotification('Error performing action: ' + error.message, 'error');
@@ -2889,14 +3266,6 @@
 
         function exportData() {
             showNotification('Export feature would need to be implemented with Firebase Admin SDK on server side', 'info');
-        }
-
-        function createBackup() {
-            showNotification('Backups are automatically handled by Firebase', 'info');
-        }
-
-        function restoreBackup() {
-            showNotification('Restore feature would need to be implemented with Firebase Admin SDK on server side', 'info');
         }
 
         function showCopyFeedback(message) {
@@ -3049,7 +3418,10 @@
                 
                 if (currentUserData) {
                     userAvatar.textContent = currentUserData.username.charAt(0).toUpperCase();
-                    if (currentUserData.role === 'admin') {
+                    
+                    // Check admin status properly
+                    const isAdmin = await checkAdminStatus();
+                    if (isAdmin) {
                         userAvatar.classList.add('admin');
                         userRoleSpan.textContent = 'admin';
                         userRoleSpan.classList.add('admin');
