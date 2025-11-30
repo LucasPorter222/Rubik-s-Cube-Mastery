@@ -188,7 +188,7 @@ git push origin amazing-new-feature
 - 🌐 **Live Site**: [rubikscubemastery.online](https://rubikscubemastery.online)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/your-username/rubiks-cube-mastery/issues)
 - 💬 **Discussions**: [Join our community](https://github.com/your-username/rubiks-cube-mastery/discussions)
-- 📧 **Email**: hello@rubikscubemastery.online
+- 📧 **Email**: lucasontheswitch2@proton.me
 
 ## 📜 License
 
