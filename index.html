@@ -22,9 +22,18 @@
     <a href="/index.html">🏠 Home</a>
     <a href="/solver.html">🤖 Solver</a>
     <a href="/blog.html">📝 Blog</a>
-    <a href="/algorithms/index.html">🎯 Algorithms</a>
+    <a href="/algorithms/indbex.html">🎯 Algorithms</a>
+    <a href="/analytics.html">📊 Analytics </a>
 </nav>
     
+
+<script>
+    // Theme management - apply before page renders to prevent flash
+    (function() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+</script>
     
     <meta name="geo.region" content="GB">
     <meta name="geo.placename" content="United Kingdom">
@@ -3939,6 +3948,350 @@
                 clearInterval(timerInterval);
             }
         });
+
+
+
+
+        function securityTest() {
+    // Admin verification through Firestore users collection
+    const isAdmin = async () => {
+        try {
+            if (typeof firebase === 'undefined') {
+                console.log('❌ Firebase not loaded');
+                return false;
+            }
+
+            const auth = firebase.auth();
+            if (!auth) {
+                console.log('❌ Firebase Auth not available');
+                return false;
+            }
+
+            const user = auth.currentUser;
+            if (!user) {
+                console.log('❌ No user logged in');
+                return false;
+            }
+
+            console.log('👤 Checking admin status for:', user.email);
+
+            const db = firebase.firestore();
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            
+            if (!userDoc.exists) {
+                console.log('❌ User document not found in Firestore');
+                return false;
+            }
+
+            const userData = userDoc.data();
+            const isAdminUser = userData.role === 'admin' || userData.isAdmin === true;
+            
+            if (isAdminUser) {
+                console.log('✅ Admin access granted - Role:', userData.role);
+                return true;
+            } else {
+                console.log('❌ Access denied: User is not admin');
+                console.log('   User role:', userData.role || 'none');
+                return false;
+            }
+
+        } catch (error) {
+            console.log('❌ Error checking admin status:', error);
+            return false;
+        }
+    };
+
+    const tests = {
+        // Firebase Security Tests
+        firebase: {
+            testConfig: () => {
+                try {
+                    const config = window.firebaseConfig;
+                    if (!config) {
+                        return '❌ Firebase config not found';
+                    }
+                    
+                    const placeholderPatterns = [
+                        /AIzaSyBEf5xVz5lKxF-zZ5Z5Z5Z5Z5Z5Z5Z5Z5Z/,
+                        /123456789012/,
+                        /abcdef123456/
+                    ];
+                    
+                    for (const pattern of placeholderPatterns) {
+                        if (JSON.stringify(config).match(pattern)) {
+                            return '❌ Firebase config contains placeholder values';
+                        }
+                    }
+                    
+                    return '✅ Firebase config looks valid';
+                } catch (e) {
+                    return `❌ Error checking config: ${e.message}`;
+                }
+            },
+            
+            testAuthState: () => {
+                return new Promise((resolve) => {
+                    const auth = firebase.auth();
+                    if (!auth) {
+                        resolve('❌ Firebase Auth not available');
+                        return;
+                    }
+                    
+                    auth.onAuthStateChanged((user) => {
+                        if (user) {
+                            resolve(`✅ User authenticated: ${user.email} (UID: ${user.uid})`);
+                        } else {
+                            resolve('❌ No user authenticated');
+                        }
+                    });
+                });
+            },
+
+            testFirestoreAccess: async () => {
+                try {
+                    const db = firebase.firestore();
+                    const auth = firebase.auth();
+                    const user = auth.currentUser;
+                    
+                    if (!user) {
+                        return '❌ No user to test Firestore access';
+                    }
+
+                    const timesRef = db.collection('times');
+                    const query = timesRef.where('uid', '==', user.uid).limit(1);
+                    const snapshot = await query.get();
+                    
+                    const usersRef = db.collection('users').doc(user.uid);
+                    const userDoc = await usersRef.get();
+                    
+                    return `✅ Firestore access: Times (${snapshot.size}), Users (${userDoc.exists ? 'yes' : 'no'})`;
+                } catch (error) {
+                    return `❌ Firestore access error: ${error.message}`;
+                }
+            },
+
+            testSecurityRules: async () => {
+                try {
+                    const db = firebase.firestore();
+                    const auth = firebase.auth();
+                    const user = auth.currentUser;
+                    
+                    if (!user) {
+                        return '❌ No user to test security rules';
+                    }
+
+                    const otherUserUid = 'test_other_user_' + Date.now();
+                    const otherUserDoc = db.collection('times').doc(otherUserUid);
+                    
+                    try {
+                        await otherUserDoc.get();
+                        return '⚠️ Security rules might be too permissive';
+                    } catch (error) {
+                        if (error.code === 'permission-denied') {
+                            return '✅ Security rules properly restricting access';
+                        }
+                        throw error;
+                    }
+                } catch (error) {
+                    return `✅ Security rules test: ${error.code === 'permission-denied' ? 'Properly restricted' : 'Error: ' + error.message}`;
+                }
+            }
+        },
+
+        // User Management Tests
+        users: {
+            testUserCollection: async () => {
+                try {
+                    const db = firebase.firestore();
+                    const auth = firebase.auth();
+                    const user = auth.currentUser;
+                    
+                    if (!user) {
+                        return '❌ No user to test user collection';
+                    }
+
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    
+                    if (!userDoc.exists) {
+                        return '❌ User document not found in users collection';
+                    }
+
+                    const userData = userDoc.data();
+                    const hasRole = userData.role !== undefined;
+                    const hasEmail = userData.email !== undefined;
+                    const hasTimestamp = userData.createdAt !== undefined;
+                    
+                    return `✅ User document: Role=${hasRole}, Email=${hasEmail}, Timestamp=${hasTimestamp}`;
+                } catch (error) {
+                    return `❌ User collection test error: ${error.message}`;
+                }
+            },
+
+            testAdminPrivileges: async () => {
+                try {
+                    const db = firebase.firestore();
+                    const usersQuery = db.collection('users').limit(10);
+                    const usersSnapshot = await usersQuery.get();
+                    
+                    return `✅ Admin privileges: Can read ${usersSnapshot.size} users`;
+                } catch (error) {
+                    return `❌ Admin privileges test: ${error.code === 'permission-denied' ? 'Properly restricted' : 'Error: ' + error.message}`;
+                }
+            }
+        },
+
+        // Storage Tests
+        storage: {
+            testSensitiveData: () => {
+                const sensitiveKeys = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.includes('password') || key.includes('token') || key.includes('secret') || key.includes('apiKey')) {
+                        sensitiveKeys.push(key);
+                    }
+                }
+                return sensitiveKeys.length > 0 
+                    ? `⚠️ Potential sensitive data found: ${sensitiveKeys.join(', ')}`
+                    : '✅ No obvious sensitive data in localStorage';
+            },
+            
+            testFirebaseTokens: () => {
+                const firebaseKeys = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('firebase:') || key.startsWith('Firebase')) {
+                        firebaseKeys.push(key);
+                    }
+                }
+                return firebaseKeys.length > 0 
+                    ? `🔐 Firebase storage keys: ${firebaseKeys.join(', ')}`
+                    : '✅ No Firebase tokens in localStorage';
+            }
+        },
+
+        // Authentication Tests
+        auth: {
+            testSessionTimeout: () => {
+                const auth = firebase.auth();
+                const user = auth.currentUser;
+                if (!user) return '❌ No user to test session';
+                
+                return user.getIdTokenResult()
+                    .then((token) => {
+                        const expiresIn = new Date(token.expirationTime) - new Date();
+                        const hoursUntilExpiry = expiresIn / (1000 * 60 * 60);
+                        return hoursUntilExpiry > 0 
+                            ? `✅ Session active, expires in ${hoursUntilExpiry.toFixed(1)} hours`
+                            : '❌ Session expired';
+                    })
+                    .catch(() => '❌ Token refresh failed');
+            },
+
+            testEmailVerification: () => {
+                const auth = firebase.auth();
+                const user = auth.currentUser;
+                if (!user) return '❌ No user to test email verification';
+                
+                return user.emailVerified 
+                    ? '✅ Email verified'
+                    : '⚠️ Email not verified';
+            }
+        }
+    };
+
+    const runSecurityTests = async () => {
+        console.log('🔐 Starting Security Test Suite...');
+        
+        if (!await isAdmin()) {
+            console.log('❌ Security tests aborted: Admin privileges required');
+            return;
+        }
+
+        console.log('📋 Running Security Tests...\n');
+        
+        // Firebase Tests
+        console.log('🔥 Firebase Tests:');
+        console.log('  Config:', tests.firebase.testConfig());
+        const authResult = await tests.firebase.testAuthState();
+        console.log('  Auth State:', authResult);
+        const firestoreResult = await tests.firebase.testFirestoreAccess();
+        console.log('  Firestore Access:', firestoreResult);
+        const securityRulesResult = await tests.firebase.testSecurityRules();
+        console.log('  Security Rules:', securityRulesResult);
+        
+        // User Management Tests
+        console.log('\n👥 User Management Tests:');
+        const userCollectionResult = await tests.users.testUserCollection();
+        console.log('  User Collection:', userCollectionResult);
+        const adminPrivilegesResult = await tests.users.testAdminPrivileges();
+        console.log('  Admin Privileges:', adminPrivilegesResult);
+        
+        // Storage Tests
+        console.log('\n💾 Storage Tests:');
+        console.log('  Sensitive Data:', tests.storage.testSensitiveData());
+        console.log('  Firebase Tokens:', tests.storage.testFirebaseTokens());
+        
+        // Authentication Tests
+        console.log('\n🔐 Authentication Tests:');
+        console.log('  Session Timeout:', await tests.auth.testSessionTimeout());
+        console.log('  Email Verification:', tests.auth.testEmailVerification());
+        
+        console.log('\n✅ Security Test Complete!');
+    };
+
+    runSecurityTests();
+}
+
+// Helper functions
+async function checkAdminStatus() {
+    try {
+        if (typeof firebase === 'undefined') {
+            console.log('❌ Firebase not loaded');
+            return;
+        }
+
+        const auth = firebase.auth();
+        const user = auth.currentUser;
+        
+        if (!user) {
+            console.log('❌ No user logged in');
+            return;
+        }
+
+        console.log('👤 Current User:');
+        console.log('  Email:', user.email);
+        console.log('  UID:', user.uid);
+        console.log('  Email Verified:', user.emailVerified);
+        
+        const db = firebase.firestore();
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        
+        if (!userDoc.exists) {
+            console.log('❌ User document not found in Firestore');
+            return false;
+        }
+
+        const userData = userDoc.data();
+        console.log('  Firestore Data:', userData);
+        
+        const isAdmin = userData.role === 'admin' || userData.isAdmin === true;
+        console.log('  Admin Status:', isAdmin ? '✅ ADMIN' : '❌ Not Admin');
+        
+        return isAdmin;
+    } catch (error) {
+        console.log('❌ Error checking admin status:', error);
+    }
+}
+
+// Auto-inject into page
+if (typeof window.securityTest === 'undefined') {
+    window.securityTest = securityTest;
+    window.checkAdminStatus = checkAdminStatus;
+    
+    console.log('🔧 Security testing functions injected!');
+    console.log('Run checkAdminStatus() to verify admin access, then securityTest()');
+} 
+        
     </script>
 </body>
 </html>
