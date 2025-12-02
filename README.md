@@ -141,13 +141,6 @@ if ('serviceWorker' in navigator) {
 // Install to home screen like a native app!
 ```
 
-## 🌟 Success Stories
-
-> "I went from never solving a cube to sub-2 minutes in 3 weeks! The progress tracking kept me motivated." - *Sarah, 28*
-
-> "As a teacher, I use this for my after-school cube club. The kids love competing on the leaderboard!" - *Mr. Chen, High School Teacher*
-
-> "Finally, a timer that works seamlessly with learning resources. No more app switching!" - *Alex, Speedcuber*
 
 ## 🚀 Deployment Made Easy
 
@@ -192,7 +185,7 @@ git push origin amazing-new-feature
 
 ## 📜 License
 
-MIT License - feel free to use this project as inspiration for your own learning platforms!
+MIT License - feel free to use this project as inspiration for your own learning platforms but make sure to creddit me !
 
 ---
 
