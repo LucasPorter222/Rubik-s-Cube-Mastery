@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OLL Algorithms - Orient Last Layer | Rubik's Cube Mastery</title>
+    <meta name="description" content="Complete OLL algorithms guide: 57 cases with recognition patterns, 2-look OLL, and full OLL for speedcubing. Interactive practice tools included.">
+    <style>
+        /* Copy ALL CSS from your main index.html */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-card: #ffffff;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --accent: #667eea;
+            --accent-alt: #f093fb;
+            --border: #e5e7eb;
+            --shadow: rgba(0,0,0,0.1);
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --admin: #8b5cf6;
+        }
+
+        body.dark-mode {
+            --bg-primary: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            --bg-card: #1e293b;
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --accent: #818cf8;
+            --accent-alt: #c084fc;
+            --border: #334155;
+            --shadow: rgba(0,0,0,0.3);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Centered Navigation */
+        .centered-nav {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 15px;
+            margin: 30px auto;
+            box-shadow: 0 8px 25px var(--shadow);
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            max-width: 600px;
+            border: 2px solid var(--border);
+        }
+
+        .centered-nav a {
+            text-decoration: none;
+            color: var(--accent);
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            background: var(--bg-card);
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .centered-nav a:hover {
+            background: var(--accent);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px var(--shadow);
+            border-color: var(--accent);
+        }
+
+        .centered-nav a.active {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-alt) 100%);
+            color: white;
+            border-color: transparent;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        /* Responsive design for centered nav */
+        @media (max-width: 768px) {
+            .centered-nav {
+                flex-direction: column;
+                padding: 20px;
+                gap: 12px;
+                max-width: 90%;
+            }
+            
+            .centered-nav a {
+                width: 100%;
+                margin: 0;
+            }
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-primary);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-alt) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 1.2em;
+            opacity: 0.95;
+            color: var(--text-primary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .method-card {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px var(--shadow);
+            border: 2px solid var(--border);
+        }
+
+        .notation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .notation-item {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px var(--shadow);
+            text-align: center;
+            border: 2px solid var(--border);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .notation-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .notation-item strong {
+            color: var(--accent);
+            font-size: 1.5em;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .difficulty {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+
+        .difficulty.beginner {
+            background: var(--success);
+            color: white;
+        }
+
+        .difficulty.intermediate {
+            background: var(--warning);
+            color: white;
+        }
+
+        .difficulty.advanced {
+            background: var(--danger);
+            color: white;
+        }
+
+        .algorithm {
+            background: #1e293b;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            margin: 10px 0;
+            overflow-x: auto;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .algorithm:hover {
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .algorithm::after {
+            content: "📋 Click to copy";
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+
+        body.dark-mode .algorithm {
+            background: #0f172a;
+        }
+
+        .icon-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            margin: 5px;
+        }
+
+        .icon-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+
+        .icon-btn.secondary {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+
+        .progress-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+            padding: 20px;
+            background: var(--border);
+            border-radius: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .progress-step {
+            text-align: center;
+            flex: 1;
+            min-width: 80px;
+            transition: all 0.3s ease;
+        }
+
+        .progress-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.complete .progress-circle {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-alt) 100%);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .oll-case {
+            background: var(--border);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--accent);
+        }
+
+        .oll-case.learned {
+            background: rgba(16, 185, 129, 0.1);
+            border-left-color: var(--success);
+        }
+
+        .case-pattern {
+            font-family: 'Courier New', monospace;
+            background: #1e293b;
+            color: #fbbf24;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 0.9em;
+        }
+
+        body.dark-mode .case-pattern {
+            background: #0f172a;
+        }
+
+        .search-box {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border);
+            border-radius: 25px;
+            font-size: 1em;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .notification.success { background: var(--success); }
+        .notification.error { background: var(--danger); }
+        .notification.warning { background: var(--warning); }
+        .notification.info { background: var(--accent); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .pattern-visual {
+            display: grid;
+            grid-template-columns: repeat(3, 30px);
+            grid-template-rows: repeat(3, 30px);
+            gap: 2px;
+            margin: 10px 0;
+            justify-content: center;
+        }
+
+        .pattern-dot {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #333;
+            border-radius: 3px;
+            background: #1e293b;
+        }
+
+        .pattern-dot.yellow {
+            background: yellow;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2em; }
+            .notation-grid { grid-template-columns: repeat(2, 1fr); }
+            .progress-indicator { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Centered Navigation -->
+    <nav class="centered-nav">
+        <a href="../index.html">🏠 Home</a>
+        <a href="../solver.html">🤖 Solver</a>
+        <a href="../blog.html">📝 Blog</a>
+        <a href="index.html">🎯 Algorithms</a>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h1>🎨 OLL Algorithms - Orient Last Layer</h1>
+            <p class="tagline">Master 57 OLL cases to make the entire top face yellow in one look. Complete with recognition patterns and practice tools.</p>
+        </header>
+
+        <!-- OLL Statistics -->
+        <div class="method-card">
+            <h3>📊 OLL Overview</h3>
+            <div class="notation-grid">
+                <div class="notation-item">
+                    <strong>57</strong>
+                    <p>Total Cases</p>
+                </div>
+                <div class="notation-item">
+                    <strong>10</strong>
+                    <p>2-Look OLL</p>
+                </div>
+                <div class="notation-item">
+                    <strong>7</strong>
+                    <p>Dot Cases</p>
+                </div>
+                <div class="notation-item">
+                    <strong>8</strong>
+                    <p>Line Cases</p>
+                </div>
+                <div class="notation-item">
+                    <strong>7</strong>
+                    <p>L Cases</p>
+                </div>
+                <div class="notation-item">
+                    <strong>4</strong>
+                    <p>T Cases</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Learning Progress -->
+        <div class="method-card">
+            <h3>📈 Your OLL Progress</h3>
+            <div class="progress-indicator">
+                <div class="progress-step" data-step="2look">
+                    <div class="progress-circle">2L</div>
+                    <p>2-Look</p>
+                    <small>0/10 learned</small>
+                </div>
+                <div class="progress-step" data-step="cross">
+                    <div class="progress-circle">C</div>
+                    <p>Cross</p>
+                    <small>0/8 learned</small>
+                </div>
+                <div class="progress-step" data-step="edges">
+                    <div class="progress-circle">E</div>
+                    <p>Edges</p>
+                    <small>0/28 learned</small>
+                </div>
+                <div class="progress-step" data-step="full">
+                    <div class="progress-circle">F</div>
+                    <p>Full OLL</p>
+                    <small>0/57 learned</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="method-card">
+            <h3>🔍 Search OLL Cases</h3>
+            <div class="search-box">
+                <input type="text" id="ollSearch" placeholder="🔍 Search by case name, pattern, or algorithm..." onkeyup="searchOLL()">
+            </div>
+            <div id="searchResults"></div>
+        </div>
+
+        <!-- 2-Look OLL Section -->
+        <div class="method-card">
+            <h3>🔰 2-Look OLL (Beginner to Intermediate)</h3>
+            <p>Learn these 10 algorithms first to solve OLL in two steps. Much easier than learning all 57 at once!</p>
+            
+            <div class="oll-case" data-case="2look-1">
+                <h4>Dot Case 1 - Make Cross</h4>
+                <div class="case-pattern">No edges oriented</div>
+                <div class="pattern-visual">
+                    <div class="pattern-dot"></div><div class="pattern-dot"></div><div class="pattern-dot"></div>
+                    <div class="pattern-dot"></div><div class="pattern-dot yellow"></div><div class="pattern-dot"></div>
+                    <div class="pattern-dot"></div><div class="pattern-dot"></div><div class="pattern-dot"></div>
+                </div>
+                <div class="algorithm">F R U R' U' F' f R U R' U' f'</div>
+                <p><strong>Recognition:</strong> No yellow edges on top</p>
+                <button class="icon-btn secondary" onclick="markLearned('2look-1', 'oll')">Mark Learned</button>
+                <button class="icon-btn" onclick="practiceCase('2look-1')">🎯 Practice This Case</button>
+            </div>
+
+            <div class="oll-case" data-case="2look-2">
+                <h4>Line Case - Make Cross</h4>
+                <div class="case-pattern">Two opposite edges oriented</div>
+                <div class="pattern-visual">
+                    <div class="pattern-dot"></div><div class="pattern-dot yellow"></div><div class="pattern-dot"></div>
+                    <div class="pattern-dot"></div><div class="pattern-dot yellow"></div><div class="pattern-dot"></div>
+                    <div class="pattern-dot"></div><div class="pattern-dot yellow"></div><div class="pattern-dot"></div>
+                </div>
+                <div class="algorithm">F R U R' U' F'</div>
+                <p><strong>Recognition:</strong> Yellow line across the top</p>
+                <button class="icon-btn secondary" onclick="markLearned('2look-2', 'oll')">Mark Learned</button>
+                <button class="icon-btn" onclick="practiceCase('2look-2')">🎯 Practice This Case</button>
+            </div>
+
+            <div class="oll-case" data-case="2look-3">
+                <h4>L Case - Make Cross</h4>
+                <div class="case-pattern">Two adjacent edges oriented</div>
+                <div class="pattern-visual">
+                    <div class="pattern-dot yellow"></div><div class="pattern-dot yellow"></div><div class="pattern-dot"></div>
+                    <div class="pattern-dot"></div><div class="pattern-dot yellow"></div><div class="pattern-dot"></div>
+                    <div class="pattern-dot"></div><div class="pattern-dot"></div><div class="pattern-dot"></div>
+                </div>
+                <div class="algorithm">f R U R' U' f'</div>
+                <p><strong>Recognition:</strong> Yellow L-shape on top</p>
+                <button class="icon-btn secondary" onclick="markLearned('2look-3', 'oll')">Mark Learned</button>
+                <button class="icon-btn" onclick="practiceCase('2look-3')">🎯 Practice This Case</button>
+            </div>
+        </div>
+
+        <!-- Full OLL Sections -->
+        <div class="method-card">
+            <h3>🌟 Dot Cases (7 Algorithms)</h3>
+            <p>Cases where no corners are oriented correctly.</p>
+            
+            <div class="oll-case" data-case="dot-1">
+                <h4>OLL 1 - Square Dot</h4>
+                <div class="algorithm">R U2 R2 F R F' U2 R' F R F'</div>
+                <button class="icon-btn secondary" onclick="markLearned('dot-1', 'oll')">Mark Learned</button>
+            </div>
+
+            <div class="oll-case" data-case="dot-2">
+                <h4>OLL 2 - Cross Dot</h4>
+                <div class="algorithm">F R U R' U' F' f R U R' U' f'</div>
+                <button class="icon-btn secondary" onclick="markLearned('dot-2', 'oll')">Mark Learned</button>
+            </div>
+        </div>
+
+        <div class="method-card">
+            <h3>📏 Line Cases (8 Algorithms)</h3>
+            <p>Cases with a line of oriented edges.</p>
+            
+            <div class="oll-case" data-case="line-1">
+                <h4>OLL 21 - Double Sune</h4>
+                <div class="algorithm">R U2 R' U' R U R' U' R U' R'</div>
+                <button class="icon-btn secondary" onclick="markLearned('line-1', 'oll')">Mark Learned</button>
+            </div>
+        </div>
+
+        <!-- Practice Tools -->
+        <div class="method-card">
+            <h3>🎯 OLL Practice Tools</h3>
+            <div class="notation-grid">
+                <div class="notation-item" onclick="startOLLDrill('2look')">
+                    <strong>🔰</strong>
+                    <p>2-Look Drill</p>
+                    <small>10 cases</small>
+                </div>
+                <div class="notation-item" onclick="startOLLDrill('dot')">
+                    <strong>⚫</strong>
+                    <p>Dot Cases</p>
+                    <small>7 cases</small>
+                </div>
+                <div class="notation-item" onclick="startOLLDrill('line')">
+                    <strong>📏</strong>
+                    <p>Line Cases</p>
+                    <small>8 cases</small>
+                </div>
+                <div class="notation-item" onclick="startOLLDrill('weak')">
+                    <strong>🎯</strong>
+                    <p>Weak Spots</p>
+                    <small>Your slowest</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="method-card">
+            <h3>💡 OLL Learning Tips</h3>
+            <ul>
+                <li>Start with 2-look OLL and master it first</li>
+                <li>Learn recognition before algorithms</li>
+                <li>Group similar cases together</li>
+                <li>Practice with a timer to build speed</li>
+                <li>Use muscle memory - practice without looking at the algorithm</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // OLL Data
+        const ollCases = {
+            '2look-1': { name: 'Dot Case 1', algorithm: "F R U R' U' F' f R U R' U' f'", pattern: 'No edges oriented' },
+            '2look-2': { name: 'Line Case', algorithm: "F R U R' U' F'", pattern: 'Two opposite edges oriented' },
+            '2look-3': { name: 'L Case', algorithm: "f R U R' U' f'", pattern: 'Two adjacent edges oriented' },
+            'dot-1': { name: 'OLL 1', algorithm: "R U2 R2 F R F' U2 R' F R F'", pattern: 'Square Dot' },
+            'dot-2': { name: 'OLL 2', algorithm: "F R U R' U' F' f R U R' U' f'", pattern: 'Cross Dot' },
+            'line-1': { name: 'OLL 21', algorithm: "R U2 R' U' R U R' U' R U' R'", pattern: 'Double Sune' }
+        };
+
+        function markLearned(caseId, type) {
+            const progress = JSON.parse(localStorage.getItem('algorithmProgress')) || {
+                beginner: 0, f2l: 0, oll: 0, pll: 0, ollCases: {}
+            };
+            
+            if (!progress.ollCases[caseId]) {
+                progress.oll++;
+                progress.ollCases[caseId] = true;
+                localStorage.setItem('algorithmProgress', JSON.stringify(progress));
+                
+                // Update UI
+                document.querySelector(`[data-case="${caseId}"]`).classList.add('learned');
+                updateProgress();
+                showNotification('OLL case marked as learned!', 'success');
+            }
+        }
+
+        function updateProgress() {
+            const progress = JSON.parse(localStorage.getItem('algorithmProgress')) || { ollCases: {} };
+            const learnedCount = Object.keys(progress.ollCases || {}).length;
+            
+            // Update progress indicators
+            document.querySelectorAll('.progress-step').forEach(step => {
+                const stepType = step.dataset.step;
+                const total = getTotalForStep(stepType);
+                const learned = getLearnedForStep(stepType, progress.ollCases);
+                
+                step.querySelector('small').textContent = `${learned}/${total} learned`;
+                
+                if (learned > 0) {
+                    step.classList.add('complete');
+                }
+            });
+        }
+
+        function getTotalForStep(stepType) {
+            const totals = {
+                '2look': 10,
+                'cross': 8,
+                'edges': 28,
+                'full': 57
+            };
+            return totals[stepType] || 0;
+        }
+
+        function getLearnedForStep(stepType, ollCases) {
+            // Simplified - in real implementation, categorize cases properly
+            return Object.keys(ollCases || {}).length;
+        }
+
+        function searchOLL() {
+            const query = document.getElementById('ollSearch').value.toLowerCase();
+            const results = document.getElementById('searchResults');
+            
+            if (query.length < 2) {
+                results.innerHTML = '';
+                return;
+            }
+
+            const filtered = Object.entries(ollCases).filter(([id, data]) => 
+                data.name.toLowerCase().includes(query) || 
+                data.algorithm.toLowerCase().includes(query) ||
+                data.pattern.toLowerCase().includes(query)
+            );
+
+            if (filtered.length > 0) {
+                results.innerHTML = filtered.map(([id, data]) => `
+                    <div class="oll-case">
+                        <h4>${data.name}</h4>
+                        <div class="case-pattern">${data.pattern}</div>
+                        <div class="algorithm">${data.algorithm}</div>
+                        <button class="icon-btn secondary" onclick="markLearned('${id}', 'oll')">Mark Learned</button>
+                    </div>
+                `).join('');
+            } else {
+                results.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-secondary);">No OLL cases found. Try different keywords.</p>';
+            }
+        }
+
+        function practiceCase(caseId) {
+            showNotification(`Practice mode started for ${ollCases[caseId].name}`, 'info');
+            // In full implementation, this would set up a practice session
+        }
+
+        function startOLLDrill(type) {
+            showNotification(`Starting ${type} OLL drill...`, 'info');
+            // In full implementation, this would start a timed practice session
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()">×</button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
+
+        // Copy algorithm to clipboard
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('algorithm')) {
+                const text = e.target.textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    showNotification('Algorithm copied to clipboard!', 'success');
+                });
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateProgress();
+        });
+    </script>
+</body>
+</html>
