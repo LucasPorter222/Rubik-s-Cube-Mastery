@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solve Analytics | Rubik's Cube Mastery</title>
+
+<script>
+    // Theme management - apply before page renders to prevent flash
+    (function() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+</script>
+
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        :root {
+            --bg-card: rgba(255, 255, 255, 0.95);
+            --shadow: rgba(0, 0, 0, 0.1);
+            --primary: #667eea;
+        }
+
+        nav {
+    background: var(--bg-card);
+    padding: 15px;
+    border-radius: 10px;
+    margin: 20px;
+    text-align: center;
+    box-shadow: 0 4px 6px var(--shadow);
+
+}
+
+        nav a {
+            color: #333;
+            text-decoration: none;
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: inline-block;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        nav a.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-user {
+            display: block;
+            color: #666;
+            font-size: 0.85rem;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .loading-state, .auth-required, .empty-state {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .loading-state {
+            display: none;
+        }
+
+        .loading-state.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        .stat-card h3 {
+            color: #667eea;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-card h2 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+            height: 400px;
+            max-height: 600px;
+        }
+
+        #progressChart {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .pb-highlight {
+            background: #d4edda !important;
+            font-weight: bold;
+        }
+
+        .calculator-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .calculator-section h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .time-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .time-inputs input {
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .time-inputs input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .result {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result h3 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .calculation-steps {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        footer {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            text-align: center;
+            margin-top: 3rem;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .page-header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            nav {
+                margin: 10px;
+                padding: 10px;
+            }
+
+            nav a {
+                display: block;
+                margin: 5px 0;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/index.html">🏠 Home</a>
+        <a href="/solver.html">🤖 Solver</a>
+        <a href="/blog.html">📝 Blog</a>
+        <a href="/algorithms/index.html">🎯 Algorithms</a>
+        <a href="/analytics.html" class="active">📊 Analytics</a>
+        <div class="nav-user" id="navUser">Loading...</div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>📊 Your Solve Analytics</h1>
+            <p>Track your progress and celebrate your improvements</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <!-- Loading State -->
+        <div class="loading-state active" id="loadingState">
+            <div class="spinner"></div>
+            <h2>Loading Your Analytics...</h2>
+            <p>Fetching your solve data from Firebase</p>
+        </div>
+
+        <!-- Auth Required State -->
+        <div class="auth-required" id="authRequired" style="display: none;">
+            <h2>🔐 Authentication Required</h2>
+            <p>Please log in to view your solve analytics</p>
+            <button onclick="window.location.href='index.html'" style="margin-top: 1rem;">Go to Home</button>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <h2>📝 No Solves Yet</h2>
+            <p>Start timing your solves to see your analytics here!</p>
+            <button onclick="window.location.href='index.html'" style="margin-top: 1rem;">Go to Timer</button>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" style="display: none;">
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Personal Best</h3>
+                    <div class="stat-value" id="pbValue">--</div>
+                    <div class="stat-label">Single Solve</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Best Ao5</h3>
+                    <div class="stat-value" id="ao5Value">--</div>
+                    <div class="stat-label">Average of 5</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Best Ao12</h3>
+                    <div class="stat-value" id="ao12Value">--</div>
+                    <div class="stat-label">Average of 12</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Session Avg</h3>
+                    <div class="stat-value" id="sessionAvgValue">--</div>
+                    <div class="stat-label">Today's Average</div>
+                </div>
+            </div>
+
+            <!-- Progress Chart -->
+            <div class="chart-card">
+                <h2>📈 Progress Over Time</h2>
+                <div class="chart-wrapper">
+                    <canvas id="progressChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Solves Table -->
+            <div class="chart-card">
+                <h2>🕐 Recent Solves</h2>
+                <div class="table-container">
+                    <table id="solvesTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Time</th>
+                                <th>Date</th>
+                                <th>Ao5</th>
+                                <th>Ao12</th>
+                            </tr>
+                        </thead>
+                        <tbody id="solvesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Average Calculator -->
+            <div class="calculator-section">
+                <h2>🧮 Average Calculator</h2>
+                <p style="color: #666; margin-bottom: 1.5rem;">
+                    Enter your solve times to calculate Ao5 or Ao12. The calculation removes the best and worst times.
+                </p>
+                
+                <div class="input-group">
+                    <label>Enter Times (in seconds):</label>
+                    <div class="time-inputs" id="calculatorInputs">
+                        <input type="number" step="0.01" placeholder="Time 1">
+                        <input type="number" step="0.01" placeholder="Time 2">
+                        <input type="number" step="0.01" placeholder="Time 3">
+                        <input type="number" step="0.01" placeholder="Time 4">
+                        <input type="number" step="0.01" placeholder="Time 5">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button onclick="calculateAverage(5)">Calculate Ao5</button>
+                    <button onclick="setInputCount(12)">Switch to Ao12</button>
+                    <button onclick="clearCalculator()">Clear</button>
+                </div>
+
+                <div id="calculatorResult" style="display: none;" class="result">
+                    <h3>Result</h3>
+                    <div class="result-value" id="avgValue"></div>
+                    <div class="calculation-steps" id="calcSteps"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Rubik's Cube Mastery. Keep solving, keep improving! 🎯</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getFirestore, collection, query, where, orderBy, limit, onSnapshot, getDocs } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        // Firebase configuration
+       const firebaseConfig = {
+  apiKey: "AIzaSyAEoy5jkDIeN842zPzCXLq-ywUFV2TE-48",
+  authDomain: "rubiks-cube-mastery-62bb8.firebaseapp.com",
+  projectId: "rubiks-cube-mastery-62bb8",
+  storageBucket: "rubiks-cube-mastery-62bb8.firebasestorage.app",
+  messagingSenderId: "872033334908",
+  appId: "1:872033334908:web:4f5acd0817996ac3a57bf9",
+  measurementId: "G-7KNG4HWZJ6"
+};
+
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let allSolves = [];
+        let chart = null;
+
+        // Auth state observer
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('navUser').textContent = user.email || 'User';
+                loadUserData();
+            } else {
+                document.getElementById('loadingState').classList.remove('active');
+                document.getElementById('authRequired').style.display = 'block';
+            }
+        });
+
+        // Load user data from Firebase
+        async function loadUserData() {
+            try {
+                const timesRef = collection(db, 'times');
+                
+                // Query without orderBy to avoid composite index requirement
+                // We'll sort the data client-side instead
+                const q = query(
+                    timesRef,
+                    where('uid', '==', currentUser.uid)
+                );
+
+                console.log('Querying times for user:', currentUser.uid);
+
+                // Real-time listener for updates
+                onSnapshot(q, (snapshot) => {
+                    console.log('Snapshot received, docs count:', snapshot.size);
+                    
+                    allSolves = [];
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        console.log('Document data:', data);
+                        allSolves.push({
+                            id: doc.id,
+                            time: data.time,
+                            timestamp: data.timestamp?.toDate() || new Date(),
+                            scramble: data.scramble || ''
+                        });
+                    });
+
+                    console.log('Total solves loaded:', allSolves.length);
+
+                    // Sort client-side by timestamp descending
+                    allSolves.sort((a, b) => b.timestamp - a.timestamp);
+                    
+                    // Limit to last 100 solves
+                    allSolves = allSolves.slice(0, 100);
+
+                    if (allSolves.length === 0) {
+                        console.log('No solves found, showing empty state');
+                        document.getElementById('loadingState').classList.remove('active');
+                        document.getElementById('emptyState').style.display = 'block';
+                    } else {
+                        console.log('Displaying analytics with', allSolves.length, 'solves');
+                        displayAnalytics();
+                    }
+                }, (error) => {
+                    console.error('Firestore snapshot error:', error);
+                    showError('Failed to load data: ' + error.message);
+                });
+
+            } catch (error) {
+                console.error('Load data error:', error);
+                showError('Error loading data: ' + error.message);
+            }
+        }
+
+        // Display analytics with real data
+        function displayAnalytics() {
+            document.getElementById('loadingState').classList.remove('active');
+            document.getElementById('mainContent').style.display = 'block';
+
+            // Sort by timestamp (oldest to newest for calculations)
+            const sortedSolves = [...allSolves].sort((a, b) => a.timestamp - b.timestamp);
+
+            // Calculate statistics
+            const stats = calculateStatistics(sortedSolves);
+            
+            // Update stat cards
+            document.getElementById('pbValue').textContent = formatTime(stats.personalBest);
+            document.getElementById('ao5Value').textContent = stats.bestAo5 ? formatTime(stats.bestAo5) : '--';
+            document.getElementById('ao12Value').textContent = stats.bestAo12 ? formatTime(stats.bestAo12) : '--';
+            document.getElementById('sessionAvgValue').textContent = formatTime(stats.sessionAvg);
+
+            // Update chart
+            updateChart(sortedSolves);
+
+            // Update table
+            updateTable(sortedSolves, stats.personalBest);
+        }
+
+        // Calculate all statistics
+        function calculateStatistics(solves) {
+            if (!solves || solves.length === 0) {
+                return { personalBest: null, bestAo5: null, bestAo12: null, sessionAvg: null };
+            }
+
+            const times = solves.map(s => s.time);
+            
+            // Personal Best
+            const personalBest = Math.min(...times);
+
+            // Best Ao5
+            let bestAo5 = null;
+            if (times.length >= 5) {
+                for (let i = 4; i < times.length; i++) {
+                    const ao5 = calculateAverageOf(times.slice(i - 4, i + 1));
+                    if (bestAo5 === null || ao5 < bestAo5) {
+                        bestAo5 = ao5;
+                    }
+                }
+            }
+
+            // Best Ao12
+            let bestAo12 = null;
+            if (times.length >= 12) {
+                for (let i = 11; i < times.length; i++) {
+                    const ao12 = calculateAverageOf(times.slice(i - 11, i + 1));
+                    if (bestAo12 === null || ao12 < bestAo12) {
+                        bestAo12 = ao12;
+                    }
+                }
+            }
+
+            // Session Average (today's solves)
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todaySolves = solves.filter(s => {
+                const solveDate = new Date(s.timestamp);
+                solveDate.setHours(0, 0, 0, 0);
+                return solveDate.getTime() === today.getTime();
+            });
+            const sessionAvg = todaySolves.length > 0 
+                ? todaySolves.reduce((sum, s) => sum + s.time, 0) / todaySolves.length 
+                : null;
+
+            return { personalBest, bestAo5, bestAo12, sessionAvg };
+        }
+
+        // Calculate average (remove best and worst)
+        function calculateAverageOf(times) {
+            if (times.length < 3) return null;
+            const sorted = [...times].sort((a, b) => a - b);
+            const middle = sorted.slice(1, -1);
+            return middle.reduce((a, b) => a + b, 0) / middle.length;
+        }
+
+        // Update chart with real data
+        function updateChart(solves) {
+            const canvas = document.getElementById('progressChart');
+            const ctx = canvas.getContext('2d');
+
+            // Use last 50 solves for chart
+            const chartData = solves.slice(-50);
+            
+            // Calculate moving averages
+            const ao5Data = chartData.map((_, index) => {
+                if (index < 4) return null;
+                const times = chartData.slice(index - 4, index + 1).map(s => s.time);
+                return calculateAverageOf(times);
+            });
+
+            try {
+                if (chart) {
+                    chart.destroy();
+                }
+
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.map((_, i) => i + 1),
+                        datasets: [
+                            {
+                                label: 'Solve Time',
+                                data: chartData.map(s => s.time),
+                                borderColor: '#667eea',
+                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                tension: 0.4,
+                                pointRadius: 4,
+                                pointHoverRadius: 6
+                            },
+                            {
+                                label: 'Ao5',
+                                data: ao5Data,
+                                borderColor: '#764ba2',
+                                backgroundColor: 'transparent',
+                                borderDash: [5, 5],
+                                tension: 0.4,
+                                pointRadius: 0
+                            },
+                            {
+                                label: 'Trend',
+                                data: calculateTrendLine(chartData.map(s => s.time)),
+                                borderColor: '#28a745',
+                                backgroundColor: 'transparent',
+                                borderDash: [10, 5],
+                                tension: 0,
+                                pointRadius: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                title: {
+                                    display: true,
+                                    text: 'Time (seconds)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Solve Number'
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Chart error:', error);
+                document.querySelector('.chart-wrapper').innerHTML = 
+                    '<p style="text-align: center; color: #666; padding: 2rem;">Unable to render chart.</p>';
+            }
+        }
+
+        // Update recent solves table
+        function updateTable(solves, pbTime) {
+            const tbody = document.getElementById('solvesTableBody');
+            tbody.innerHTML = '';
+
+            const recentSolves = [...solves].reverse().slice(0, 20);
+
+            recentSolves.forEach((solve, index) => {
+                const row = tbody.insertRow();
+                if (solve.time === pbTime) {
+                    row.classList.add('pb-highlight');
+                }
+
+                // Calculate Ao5 and Ao12 for this solve
+                const solveIndex = solves.findIndex(s => s.id === solve.id);
+                let ao5 = null, ao12 = null;
+                
+                if (solveIndex >= 4) {
+                    const times = solves.slice(solveIndex - 4, solveIndex + 1).map(s => s.time);
+                    ao5 = calculateAverageOf(times);
+                }
+                
+                if (solveIndex >= 11) {
+                    const times = solves.slice(solveIndex - 11, solveIndex + 1).map(s => s.time);
+                    ao12 = calculateAverageOf(times);
+                }
+
+                row.innerHTML = `
+                    <td>${solves.length - solveIndex}</td>
+                    <td><strong>${formatTime(solve.time)}</strong> ${solve.time === pbTime ? '🏆 PB' : ''}</td>
+                    <td>${formatDate(solve.timestamp)}</td>
+                    <td>${ao5 ? formatTime(ao5) : '-'}</td>
+                    <td>${ao12 ? formatTime(ao12) : '-'}</td>
+                `;
+            });
+        }
+
+        // Calculate trend line
+        function calculateTrendLine(data) {
+            const n = data.length;
+            let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+            
+            for (let i = 0; i < n; i++) {
+                sumX += i;
+                sumY += data[i];
+                sumXY += i * data[i];
+                sumXX += i * i;
+            }
+            
+            const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+            
+            return data.map((_, i) => slope * i + intercept);
+        }
+
+        // Format time for display
+        function formatTime(seconds) {
+            if (!seconds) return '--';
+            return seconds.toFixed(2) + 's';
+        }
+
+        // Format date for display
+        function formatDate(date) {
+            if (!date) return '--';
+            const d = new Date(date);
+            return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.classList.add('active');
+            document.getElementById('loadingState').classList.remove('active');
+        }
+
+        // Make functions global for calculator
+        window.calculateAverage = function(expectedCount) {
+            const inputs = document.querySelectorAll('#calculatorInputs input');
+            const times = Array.from(inputs)
+                .map(input => parseFloat(input.value))
+                .filter(val => !isNaN(val));
+            
+            if (times.length < expectedCount) {
+                alert(`Please enter at least ${expectedCount} times`);
+                return;
+            }
+            
+            const timesToUse = times.slice(0, expectedCount);
+            const sorted = [...timesToUse].sort((a, b) => a - b);
+            const best = sorted[0];
+            const worst = sorted[sorted.length - 1];
+            const middle = sorted.slice(1, -1);
+            const avg = middle.reduce((a, b) => a + b, 0) / middle.length;
+            
+            document.getElementById('avgValue').textContent = avg.toFixed(2) + 's';
+            document.getElementById('calcSteps').innerHTML = `
+                <strong>Calculation:</strong><br>
+                Times used: ${timesToUse.map(t => t.toFixed(2)).join(', ')}<br>
+                Best time (removed): ${best.toFixed(2)}s<br>
+                Worst time (removed): ${worst.toFixed(2)}s<br>
+                Middle times: ${middle.map(t => t.toFixed(2)).join(', ')}<br>
+                Average: (${middle.map(t => t.toFixed(2)).join(' + ')}) / ${middle.length} = ${avg.toFixed(2)}s
+            `;
+            document.getElementById('calculatorResult').style.display = 'block';
+        };
+
+        window.setInputCount = function(count) {
+            const container = document.getElementById('calculatorInputs');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < count; i++) {
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.step = '0.01';
+                input.placeholder = `Time ${i + 1}`;
+                container.appendChild(input);
+            }
+            
+            document.getElementById('calculatorResult').style.display = 'none';
+        };
+
+        window.clearCalculator = function() {
+            document.querySelectorAll('#calculatorInputs input').forEach(input => {
+                input.value = '';
+            });
+            document.getElementById('calculatorResult').style.display = 'none';
+        };
+
+        // Handle window resize
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(function() {
+                if (chart) {
+                    chart.resize();
+                }
+            }, 250);
+        });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</body>
+</html>
