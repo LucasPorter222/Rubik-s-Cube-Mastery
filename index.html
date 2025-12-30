@@ -30,6 +30,7 @@
 
    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     
+   
 
    
 <script>
@@ -175,7 +176,29 @@
     
     <!-- Umami Analytics -->
     <script defer src="https://cloud.umami.is/script.js" data-website-id="d0c6fc8b-3acf-429f-b5f4-af09e40975de"></script>
-    
+    <body>
+        <div class="loading-screen">
+        <div class="loading-content">
+            <div class="cube-loader">
+                <div class="cube-faces">
+                    <div class="cube-face front"></div>
+                    <div class="cube-face back"></div>
+                    <div class="cube-face left"></div>
+                    <div class="cube-face right"></div>
+                    <div class="cube-face top"></div>
+                    <div class="cube-face bottom"></div>
+                </div>
+            </div>
+            <div class="loading-text">
+                <h2>Mastering the Cube...</h2>
+                <p id="cube-tip">Get ready to solve!</p> 
+            </div>
+            <div class="loading-progress">
+                <div class="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+    </body>    
     <style>
         /* Your existing CSS styles remain the same */
         * {
@@ -217,6 +240,171 @@
             line-height: 1.6;
             transition: all 0.3s ease;
             min-height: 100vh;
+            overflow: hidden;
+        }
+
+        body.loading-complete {
+            overflow: auto;
+        }
+
+        /* ========== LOADING SCREEN ========== */
+        .loading-screen {
+    position: fixed; /* Ensures it stays in place even if you scroll */
+    top: 0;
+    opacity: 1;
+    left: 0;
+    width: 100vw; /* Full viewport width */
+    height: 100vh; /* Full viewport height */
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    display: flex;
+    flex-direction: column; /* Stacks the cube, text, and bar vertically */
+    justify-content: center;
+    align-items: center;
+    z-index: 100000; /* High number to stay above everything else */
+    transition: opacity 0.8s ease-out, visibility 0.8s ease-out;
+    visibility: visible;
+    backdrop-filter: blur(10px)
+}
+
+        .loading-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none; /* Prevents clicking the hidden screen */
+}
+
+        body.dark-mode .loading-screen {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+
+        .loading-content {
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            animation: fadeInUp 0.5s ease;
+            transition: transform 0.8s ease-in-out;
+    transform: scale(1); /* Normal size */
+        }
+
+.loading-screen.hidden .loading-content {
+    transform: scale(0.8); /* Shrinks slightly as it fades */
+}
+
+        /* Animated Cube */
+        .cube-loader {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: cubeRotation 3s infinite linear;
+        }
+
+        .cube-faces {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(-20deg) rotateY(-20deg);
+        }
+
+        .cube-face {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .cube-face.front {
+            transform: translateZ(60px);
+            background: rgba(102, 126, 234, 0.6);
+        }
+
+        .cube-face.back {
+            transform: translateZ(-60px) rotateY(180deg);
+            background: rgba(118, 75, 162, 0.6);
+        }
+
+        .cube-face.left {
+            transform: translateX(-60px) rotateY(-90deg);
+            background: rgba(240, 147, 251, 0.6);
+        }
+
+        .cube-face.right {
+            transform: translateX(60px) rotateY(90deg);
+            background: rgba(102, 126, 234, 0.6);
+        }
+
+        .cube-face.top {
+            transform: translateY(-60px) rotateX(90deg);
+            background: rgba(118, 75, 162, 0.6);
+        }
+
+        .cube-face.bottom {
+            transform: translateY(60px) rotateX(-90deg);
+            background: rgba(240, 147, 251, 0.6);
+        }
+
+        /* Loading Text */
+        .loading-text h2 {
+            color: white;
+            font-size: 2.2em;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .loading-text p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1em;
+            margin-bottom: 25px;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Progress Bar */
+        .loading-progress {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #667eea, #f093fb);
+            border-radius: 4px;
+            animation: loadingProgress 3s infinite ease-in-out;
+        }
+
+        /* Animations */
+        @keyframes cubeRotation {
+            0% { transform: rotateX(0) rotateY(0); }
+            100% { transform: rotateX(360deg) rotateY(360deg); }
+        }
+
+        @keyframes loadingProgress {
+            0% { width: 0%; margin-left: 0; }
+            50% { width: 100%; margin-left: 0; }
+            100% { width: 0%; margin-left: 100%; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         .container {
@@ -1149,6 +1337,13 @@
             font-size: 1.5em;
         }
 
+
+        #cube-tip {
+    font-style: italic;
+    font-weight: 500;
+    color: #f093fb; /* Matches your accent-alt color */
+    min-height: 1.6em; /* Prevents layout jump if tip is long */
+}
         body.dark-mode .tip-box {
             background: #422006;
             color: #fef3c7;
@@ -1554,7 +1749,9 @@
 }
     </style>
 </head>
+
 <body>
+    
     <div class="firebase-status" id="firebaseStatus">Firebase: Connecting...</div>
 
     <!-- Auth Modal -->
@@ -1657,19 +1854,21 @@
             <p>You need to be signed in to access the full content of Rubik's Cube Mastery. Please log in or create an account to continue.</p>
             <button class="icon-btn" onclick="openAuth()">Sign In / Sign Up</button>
         </div>
+        
 
        <!-- Admin Panel -->
 <div class="admin-panel" id="adminPanel">
     <h2 style="border: none; margin-bottom: 10px;">⚙️ Admin Panel</h2>
     
     <div class="admin-tabs">
-        <button class="admin-tab active" onclick="showAdminSection('users')">👥 Users</button>
-        <button class="admin-tab" onclick="showAdminSection('times')">⏱️ Times</button>
-        <button class="admin-tab" onclick="showAdminSection('blog')">📝 Blog</button>
-        <button class="admin-tab" onclick="showAdminSection('system')">⚙️ System</button>
-        <button class="admin-tab" onclick="showAdminLogs()">📋 Activity Logs</button>
-        <button class="admin-tab" onclick="showAnalyticsDashboard()">📊 Analytics</button>
-    </div>
+    <button class="admin-tab active" onclick="showAdminSection('users')">👥 Users</button>
+    <button class="admin-tab" onclick="showAdminSection('times')">⏱️ Times</button>
+    <button class="admin-tab" onclick="showAdminSection('blog')">📝 Blog</button>
+    <button class="admin-tab" onclick="showAdminSection('shadowBan')">👻 Shadow Ban</button> <!-- ADD THIS LINE -->
+    <button class="admin-tab" onclick="showAdminSection('system')">⚙️ System</button>
+    <button class="admin-tab" onclick="showAdminLogs()">📋 Activity Logs</button>
+    <button class="admin-tab" onclick="showAnalyticsDashboard()">📊 Analytics</button>
+</div>
 
     <div class="admin-stats">
         <div class="admin-stat-card">
@@ -2074,6 +2273,72 @@
         </div>
     </div>
 
+
+<!-- Shadow Ban Section -->
+<div class="admin-section" id="shadowBanSection">
+    <h3>👻 Shadow Ban System</h3>
+    
+    <div class="method-card">
+        <h4>Apply Shadow Ban</h4>
+        <div class="form-group">
+            <label for="shadowBanUserSearch">Search User (Email or Username)</label>
+            <div class="search-box">
+                <input type="text" id="shadowBanUserSearch" placeholder="🔍 Enter email or username">
+            </div>
+            <button class="icon-btn" onclick="searchUserForShadowBan()" style="margin-top: 10px;">🔍 Search User</button>
+        </div>
+        
+        <div id="shadowBanSearchResults" style="margin: 20px 0; max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 10px;"></div>
+        
+        <div id="shadowBanForm" style="display: none; margin-top: 20px;">
+            <div class="form-group">
+                <label for="shadowBanUserId">User ID</label>
+                <input type="text" id="shadowBanUserId" class="form-control" readonly style="background: var(--border);">
+            </div>
+            <div class="form-group">
+                <label for="shadowBanUserEmail">User Email</label>
+                <input type="text" id="shadowBanUserEmail" class="form-control" readonly style="background: var(--border);">
+            </div>
+            <div class="form-group">
+                <label for="shadowBanReason">Reason for Shadow Ban</label>
+                <textarea id="shadowBanReason" class="form-control" placeholder="Enter reason for shadow ban..." rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="shadowBanDuration">Duration</label>
+                <select id="shadowBanDuration" class="form-control" onchange="toggleCustomDuration()">
+                    <option value="3600000">1 Hour</option>
+                    <option value="86400000">1 Day</option>
+                    <option value="604800000">1 Week</option>
+                    <option value="2592000000">1 Month</option>
+                    <option value="31536000000">1 Year</option>
+                    <option value="-1">Permanent</option>
+                    <option value="custom">Custom Duration</option>
+                </select>
+            </div>
+            <div class="form-group" id="customDurationGroup" style="display: none;">
+                <label for="customDurationMinutes">Custom Duration (Minutes)</label>
+                <input type="number" id="customDurationMinutes" class="form-control" min="1" max="525600" placeholder="Enter minutes">
+            </div>
+            <div class="form-group" style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="icon-btn" style="background: var(--danger);" onclick="applyShadowBan()">
+                    🚫 Apply Shadow Ban
+                </button>
+                <button class="icon-btn secondary" onclick="cancelShadowBan()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="method-card">
+        <h4>Active Shadow Bans</h4>
+        <div id="activeShadowBans" style="max-height: 400px; overflow-y: auto; margin-top: 15px; padding: 10px; border: 1px solid var(--border); border-radius: 10px;">
+            <!-- Active bans will load here -->
+            <p style="text-align: center; color: var(--text-secondary); padding: 20px;">Click "Refresh List" to load shadow bans</p>
+        </div>
+        <button class="icon-btn" onclick="loadShadowBans()" style="margin-top: 15px;">🔄 Refresh List</button>
+    </div>
+</div>
+
+
     <!-- System Section -->
     <div class="admin-section" id="systemSection">
         <h3>⚙️ System Tools</h3>
@@ -2131,11 +2396,11 @@
         <div class="timer-section" id="timerSection">
             <h2 style="border: none; margin-bottom: 10px;">⏱️ Speedcube Timer</h2>
             <div class="timer-display" id="timerDisplay">00:00.000</div>
-            <div class="timer-controls">
-                <button class="timer-btn start" onclick="startTimer()">▶️ Start</button>
-                <button class="timer-btn stop" onclick="stopTimer()">⏸️ Stop</button>
-                <button class="timer-btn reset" onclick="resetTimer()">🔄 Reset</button>
-            </div>
+        <div class="timer-controls">
+    <button class="timer-btn start" onclick="startSecureTimer()">▶️ Start (Secure)</button>
+    <button class="timer-btn stop" onclick="stopSecureTimer()">⏸️ Stop (Secure)</button>
+    <button class="timer-btn reset" onclick="resetTimer()">🔄 Reset</button>
+</div>
             <div class="timer-stats">
                 <div class="stat-card">
                     <div class="stat-label">Current</div>
@@ -2708,8 +2973,56 @@
 
     <div class="copy-feedback" id="copyFeedback">Copied to clipboard!</div>
 
+
+
+
+   <script>
+    const cubeTips = [
+        "Tip: Use your inspection time to plan the cross!",
+        "Fact: There are 43 quintillion possible positions.",
+        "Tip: Learn to solve the cross on the bottom.",
+        "Fact: The world record solve is under 4 seconds!",
+        "Tip: Keep your cube clean and lubricated."
+    ];
+
+    window.addEventListener('load', () => {
+        // Set the random tip
+        const tipElement = document.getElementById('cube-tip');
+        if(tipElement) {
+            tipElement.textContent = cubeTips[Math.floor(Math.random() * cubeTips.length)];
+        }
+
+        const minimumTime = 3000; // 3 Seconds
+        const loadStartTime = performance.now();
+
+        const finishLoading = () => {
+            const loader = document.querySelector('.loading-screen');
+            
+            // This triggers the CSS transitions (fade + shrink)
+            loader.classList.add('hidden');
+            
+            // Allow the user to scroll again
+            document.body.classList.add('loading-complete');
+            document.body.style.overflow = 'auto';
+
+            // Remove from display after animation finishes
+            setTimeout(() => {
+                loader.style.display = 'none';
+            }, 800);
+        };
+
+        // Calculate if we need to wait more to reach 3 seconds
+        const timeSpent = performance.now() - loadStartTime;
+        const timeLeft = Math.max(0, minimumTime - timeSpent);
+
+        setTimeout(finishLoading, timeLeft);
+    });
+</script>
         <script>
-        // ========== FIREBASE CONFIGURATION ==========
+
+
+
+// ========== FIREBASE CONFIGURATION ==========
         // Use NEW project config
 const firebaseConfig = {
   apiKey: "AIzaSyAEoy5jkDIeN842zPzCXLq-ywUFV2TE-48",
@@ -3164,6 +3477,67 @@ const firebaseConfig = {
             document.getElementById('activeSessions').textContent = 'Real-time';
             document.getElementById('firebaseStatusText').textContent = firebaseInitialized ? 'Connected' : 'Local Storage';
         }
+
+
+async function updateUI() {
+    const authBtn = document.getElementById('authBtn');
+    const userProfile = document.getElementById('userProfile');
+    const userAvatar = document.getElementById('userAvatar');
+    const usernameSpan = document.getElementById('username');
+    const userRoleSpan = document.getElementById('userRole');
+    const userStatsSpan = document.getElementById('userStats');
+    const adminPanelBtn = document.getElementById('adminPanelBtn');
+
+    if (currentUser) {
+        authBtn.style.display = 'none';
+        userProfile.classList.add('active');
+        
+        currentUserData = await Database.getUser(currentUser.uid);
+        
+        if (currentUserData) {
+            userAvatar.textContent = currentUserData.username.charAt(0).toUpperCase();
+            
+            // Check admin status properly
+            const isAdmin = await checkAdminStatus();
+            if (isAdmin) {
+                userAvatar.classList.add('admin');
+                userRoleSpan.textContent = 'admin';
+                userRoleSpan.classList.add('admin');
+                adminPanelBtn.style.display = 'block';
+            } else {
+                userAvatar.classList.remove('admin');
+                userRoleSpan.textContent = 'user';
+                userRoleSpan.classList.remove('admin');
+                adminPanelBtn.style.display = 'none';
+            }
+            
+            usernameSpan.textContent = currentUserData.username;
+            
+            const stats = await Database.getUserStats(currentUser.uid);
+            userStatsSpan.textContent = stats ? `${stats.totalSolves} solves` : '0 solves';
+            
+            // CHECK SHADOW BAN STATUS - ADD THIS
+            const isAllowed = await checkShadowBanStatus();
+            if (!isAllowed) {
+                // User is shadow banned, restrict access
+                restrictBannedUser();
+            }
+        }
+        
+        toggleContentAccess(true);
+        
+    } else {
+        authBtn.style.display = 'flex';
+        userProfile.classList.remove('active');
+        adminPanelBtn.style.display = 'none';
+        
+        toggleContentAccess(false);
+    }
+    
+    await updateLeaderboard();
+}
+
+
 
         // ========== BACKUP FUNCTIONS ==========
         async function createBackup() {
@@ -7324,6 +7698,85 @@ document.addEventListener('keydown', function(e) {
 console.log('✅ User Settings system loaded!');
 console.log('Use Ctrl+, to open settings quickly');
 
-    </script>
-</body>
-</html>
+</script>
+
+
+<!-- 🔒 SECURITY PATCH OVERRIDES (AUTO-GENERATED) -->
+<script>
+/* ===== XSS FIX ===== */
+window.createBlogPostElement = function(id, post) {
+    const div = document.createElement('div');
+    div.className = 'blog-post-item';
+    const h5 = document.createElement('h5');
+    h5.textContent = post?.title ?? '';
+    const p = document.createElement('p');
+    p.textContent = post?.description ?? '';
+    const s = document.createElement('span');
+    s.textContent = post?.published ? 'Published' : 'Draft';
+    div.append(h5, p, s);
+    return div;
+};
+
+/* ===== CSRF ===== */
+const CSRF = {
+    token: null,
+    generate() {
+        const a = new Uint8Array(32);
+        crypto.getRandomValues(a);
+        this.token = Array.from(a,b=>b.toString(16).padStart(2,'0')).join('');
+        sessionStorage.setItem('csrf', this.token);
+    },
+    validate() {
+        return sessionStorage.getItem('csrf') === this.token;
+    }
+};
+firebase.auth().onAuthStateChanged(u => { if(u) CSRF.generate(); });
+
+/* ===== AUTH RATE LIMIT ===== */
+const AuthRateLimiter = {
+    attempts:{},
+    max:5,
+    window:300000,
+    check(email){
+        const now=Date.now(), k=email.toLowerCase();
+        this.attempts[k]=(this.attempts[k]||[]).filter(t=>now-t<this.window);
+        if(this.attempts[k].length>=this.max) throw new Error('Too many attempts');
+        this.attempts[k].push(now);
+    },
+    clear(email){ delete this.attempts[email.toLowerCase()]; }
+};
+
+/* ===== LOGIN OVERRIDE ===== */
+window.login = async function(){
+    const email=loginEmail.value.trim();
+    const password=loginPassword.value;
+    try{
+        AuthRateLimiter.check(email);
+        await auth.signInWithEmailAndPassword(email,password);
+        AuthRateLimiter.clear(email);
+        showNotification('Logged in','success');
+        closeAuth();
+    }catch{
+        showAuthError('login','Invalid email or password');
+    }
+};
+
+/* ===== TIMER OVERRIDE (CLOUD FUNCTION ONLY) ===== */
+window.stopTimer = async function(){
+    if(!timerInterval) return;
+    clearInterval(timerInterval);
+    timerInterval=null;
+    if(!CSRF.validate()) return showNotification('Security error','error');
+    const time=elapsedTime/1000;
+    const scramble=document.getElementById('scrambleDisplay')?.textContent||'';
+    try{
+        const fn=firebase.functions().httpsCallable('submitSolveTime');
+        const r=await fn({time,scramble});
+        showNotification(r.data.newBest?'New PB!':'Time saved','success');
+        updateStats(); updateLeaderboard();
+    }catch(e){
+        showNotification('Time rejected','error');
+    }
+    resetTimer();
+};
+</script>
